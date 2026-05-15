@@ -22,4 +22,4 @@ ng serve
 
 - Any challenges faced
 
-google image api does work as expected. (they have banned the free tier in mainland China), and huggingface api reported a 404 when invoking, worked hard to find a usable API. 
+google image api does not work as expected. (they have banned the free tier in mainland China), and huggingface api reported a 404 when invoking, worked hard to find a usable API. 
