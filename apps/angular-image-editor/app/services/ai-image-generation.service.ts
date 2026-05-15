@@ -81,11 +81,29 @@ export class AiImageGenerationService {
   // Google Imagen models available via Vertex AI
   private models: AiModel[] = [
     {
-      id: 'sdxl',
-      name: 'Stable Diffusion XL',
-      description: 'Stability AI SDXL 1.0 — high-quality text-to-image generation via Hugging Face',
+      id: 'flux',
+      name: 'FLUX.1 Schnell',
+      description: 'Black Forest Labs FLUX.1 Schnell — fast, high-quality text-to-image via Hugging Face',
       maxWidth: 1024,
       maxHeight: 1024,
+      creditCost: 1,
+      supportedFeatures: ['negativePrompt', 'numImages'],
+    },
+    {
+      id: 'sdxl',
+      name: 'Stable Diffusion XL',
+      description: 'Stability AI SDXL 1.0 — quality text-to-image generation via Hugging Face',
+      maxWidth: 1024,
+      maxHeight: 1024,
+      creditCost: 1,
+      supportedFeatures: ['negativePrompt', 'numImages'],
+    },
+    {
+      id: 'sd21',
+      name: 'Stable Diffusion 2.1',
+      description: 'Stability AI SD 2.1 — reliable text-to-image via Hugging Face',
+      maxWidth: 768,
+      maxHeight: 768,
       creditCost: 1,
       supportedFeatures: ['negativePrompt', 'numImages'],
     },
@@ -132,6 +150,7 @@ export class AiImageGenerationService {
     const numImages = request.numImages || 1;
 
     const body = {
+      model: request.model,
       prompt: request.prompt,
       negativePrompt: request.negativePrompt,
       numImages,
