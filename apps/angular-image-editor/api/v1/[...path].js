@@ -1,8 +1,6 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-
 const VERTEX_AI_BASE_URL = 'https://us-central1-aiplatform.googleapis.com';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req, res) {
   // Only allow POST (the Vertex AI predict endpoint requires POST)
   if (req.method !== 'POST') {
     return res.status(405).json({
