@@ -79,9 +79,9 @@ export class AiImageGenerationService {
   private currentModel: AiModel | null = null;
 
   constructor(private http: HttpClient) {
-    // Auth is handled by proxy (proxy injects Bearer token)
-    // Build the predict endpoint path for Vertex AI Imagen
-    this.apiEndpoint = `/api/v1/projects/${this.projectId}/locations/${this.location}/publishers/${this.publisher}/models/${this.modelName}:predict`;
+    // API request goes through Vercel serverless function (/api/generate-image)
+    // which proxies to Vertex AI with server-side auth token
+    this.apiEndpoint = '/api/generate-image';
   }
 
   // Google Imagen models available via Vertex AI
@@ -152,15 +152,19 @@ export class AiImageGenerationService {
       return this.generateMockImage(request, model);
     }
 
-    // Vertex AI Imagen request — auth injected by proxy
+    // Vertex AI Imagen request — auth injected by Vercel serverless function
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
     });
 
     const numImages = request.numImages || 1;
 
-    // Build Vertex AI predict request body
+    // Build Vertex AI predict request body (project/location/model info sent to serverless function)
     const body = {
+      projectId: this.projectId,
+      location: this.location,
+      publisher: this.publisher,
+      modelName: this.modelName,
       instances: [
         {
           prompt: request.prompt,
