@@ -27,11 +27,20 @@ module.exports = async function handler(req, res) {
       body: JSON.stringify({ instances, parameters }),
     });
 
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Vertex AI error ${response.status}:`, errorText);
+      return res.status(response.status).json({
+        error: `Vertex AI returned ${response.status}`,
+        detail: errorText,
+      });
+    }
+
     const data = await response.json();
 
-    res.status(response.status).json(data);
+    res.status(200).json(data);
   } catch (error) {
     console.error('Vertex AI proxy error:', error);
-    res.status(502).json({ error: 'Failed to reach Vertex AI API' });
+    res.status(502).json({ error: 'Failed to reach Vertex AI API', detail: error.message });
   }
 };
