@@ -2,7 +2,7 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist/angular-image-editor",
   "functions": {
-    "api/**/*.ts": {
+    "api/**/*.{js,mjs}": {
       "memory": 512,
       "maxDuration": 60
     }
