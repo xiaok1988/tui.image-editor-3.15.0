@@ -20,5 +20,5 @@ AI helped me to configure the API.
 
 - Any challenges faced
 
-the hugging face api didn't work as expected. And i switched to the google api.
+google image api does work as expected.
 

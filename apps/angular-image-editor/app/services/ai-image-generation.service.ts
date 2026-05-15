@@ -51,14 +51,8 @@ export interface AiModel {
   providedIn: 'root',
 })
 export class AiImageGenerationService {
-  // Google Vertex AI Imagen configuration
-  // TODO: Replace with your actual PROJECT_ID
-  private projectId = 'xiaokproject-496407';
-  private location = 'us-central1';
-  private publisher = 'google';
-  private modelName = 'imagegeneration@006';
-
-  // API endpoint built via proxy (/api rewrites to Vertex AI base URL)
+  // Hugging Face Stable Diffusion configuration
+  // API request goes through Vercel serverless function (/api/generate-image)
   private apiEndpoint: string;
 
   // Enable mock mode for demonstration when API is unavailable
@@ -87,22 +81,13 @@ export class AiImageGenerationService {
   // Google Imagen models available via Vertex AI
   private models: AiModel[] = [
     {
-      id: 'imagen-006',
-      name: 'Imagen 3',
-      description: 'Google Imagen 3 — state-of-the-art text-to-image generation with photorealism',
-      maxWidth: 1536,
-      maxHeight: 1536,
-      creditCost: 1,
-      supportedFeatures: ['negativePrompt', 'width', 'height', 'numImages'],
-    },
-    {
-      id: 'imagen-005',
-      name: 'Imagen 2',
-      description: 'Previous generation Imagen model with solid image quality',
+      id: 'sdxl',
+      name: 'Stable Diffusion XL',
+      description: 'Stability AI SDXL 1.0 — high-quality text-to-image generation via Hugging Face',
       maxWidth: 1024,
       maxHeight: 1024,
       creditCost: 1,
-      supportedFeatures: ['negativePrompt', 'width', 'height', 'numImages'],
+      supportedFeatures: ['negativePrompt', 'numImages'],
     },
   ];
 
@@ -119,19 +104,6 @@ export class AiImageGenerationService {
     const model = this.getModelById(request.model);
     if (!model) {
       return throwError(() => new Error(`Unsupported model: ${request.model}`));
-    }
-
-    // Validate dimensions
-    const width = request.width || 512;
-    const height = request.height || 512;
-
-    if (width > model.maxWidth || height > model.maxHeight) {
-      return throwError(
-        () =>
-          new Error(
-            `Dimensions exceed model limits. Max: ${model.maxWidth}x${model.maxHeight}, Requested: ${width}x${height}`
-          )
-      );
     }
 
     // Check credits
@@ -152,47 +124,31 @@ export class AiImageGenerationService {
       return this.generateMockImage(request, model);
     }
 
-    // Vertex AI Imagen request — auth injected by Vercel serverless function
+    // Hugging Face Stable Diffusion request — auth injected by Vercel serverless function
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
     });
 
     const numImages = request.numImages || 1;
 
-    // Build Vertex AI predict request body (project/location/model info sent to serverless function)
     const body = {
-      projectId: this.projectId,
-      location: this.location,
-      publisher: this.publisher,
-      modelName: this.modelName,
-      instances: [
-        {
-          prompt: request.prompt,
-        },
-      ],
-      parameters: {
-        sampleCount: numImages,
-        negativePrompt: request.negativePrompt || '',
-        aspectRatio: width > height ? '4:3' : width < height ? '3:4' : '1:1',
-      },
+      prompt: request.prompt,
+      negativePrompt: request.negativePrompt,
+      numImages,
     };
 
     return this.http
-      .post<{ predictions: Array<{ bytesBase64Encoded: string }> }>(this.apiEndpoint, body, {
+      .post<{ images: string[]; model: string; prompt: string }>(this.apiEndpoint, body, {
         headers,
         responseType: 'json',
         reportProgress: true,
       })
       .pipe(
         map((response) => {
-          const images = response.predictions
-            ? response.predictions.map((p) => `data:image/png;base64,${p.bytesBase64Encoded}`)
-            : [];
-
           return {
-            images,
-            model: request.model,
-            prompt: request.prompt,
+            images: response.images || [],
+            model: response.model || request.model,
+            prompt: response.prompt || request.prompt,
             creditsUsed: model.creditCost,
             remainingCredits: this.remainingCredits - model.creditCost,
             generationTime: Date.now(),
@@ -435,7 +391,7 @@ export class AiImageGenerationService {
   }
 
   checkRateLimit(): Observable<RateLimitInfo> {
-    // Vertex AI free tier: ~1000 requests/month
+    // Hugging Face free tier: ~1000 requests/month
     // Since we can't query rate-limit headers without auth,
     // return a default estimate
     return of({ limit: 1000, remaining: 1000, resetTime: new Date(Date.now() + 86400000) }).pipe(

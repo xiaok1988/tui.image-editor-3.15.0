@@ -1,46 +1,66 @@
-const VERTEX_AI_BASE_URL = 'https://us-central1-aiplatform.googleapis.com';
+const HF_API_BASE = 'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0';
 
 // POST /api/generate-image
-// Body: { projectId, location, publisher, modelName, instances, parameters }
+// Body: { prompt, negativePrompt?, numImages? }
+// Response: { images: ["data:image/png;base64,..."], model, prompt }
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed, use POST' });
   }
 
-  const accessToken = process.env.VERTEX_AI_ACCESS_TOKEN;
-  if (!accessToken) {
-    return res.status(500).json({ error: 'Server misconfiguration: VERTEX_AI_ACCESS_TOKEN not set' });
+  const apiToken = process.env.HF_API_TOKEN;
+  if (!apiToken) {
+    return res.status(500).json({ error: 'Server misconfiguration: HF_API_TOKEN not set' });
   }
 
+  const { prompt, negativePrompt, numImages = 1 } = req.body || {};
+
+  if (!prompt) {
+    return res.status(400).json({ error: 'Missing required field: prompt' });
+  }
+
+  const count = Math.min(Math.max(numImages, 1), 4); // cap at 4
+
   try {
-    const { projectId, location, publisher, modelName, instances, parameters } = req.body;
+    const requests = Array.from({ length: count }, () =>
+      fetch(HF_API_BASE, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          inputs: prompt,
+          parameters: {
+            negative_prompt: negativePrompt || undefined,
+            num_inference_steps: 30,
+          },
+        }),
+      })
+    );
 
-    const predictPath = `/v1/projects/${projectId}/locations/${location}/publishers/${publisher}/models/${modelName}:predict`;
+    const responses = await Promise.all(requests);
 
-    const response = await fetch(`${VERTEX_AI_BASE_URL}${predictPath}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
-        Connection: 'keep-alive',
-      },
-      body: JSON.stringify({ instances, parameters }),
+    const images = await Promise.all(
+      responses.map(async (resp, i) => {
+        if (!resp.ok) {
+          const errText = await resp.text();
+          throw new Error(`HF API error ${resp.status}: ${errText}`);
+        }
+
+        const buffer = await resp.arrayBuffer();
+        const base64 = Buffer.from(buffer).toString('base64');
+        return `data:image/png;base64,${base64}`;
+      })
+    );
+
+    res.status(200).json({
+      images,
+      model: 'stable-diffusion-xl-base-1.0',
+      prompt,
     });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`Vertex AI error ${response.status}:`, errorText);
-      return res.status(response.status).json({
-        error: `Vertex AI returned ${response.status}`,
-        detail: errorText,
-      });
-    }
-
-    const data = await response.json();
-
-    res.status(200).json(data);
   } catch (error) {
-    console.error('Vertex AI proxy error:', error);
-    res.status(502).json({ error: 'Failed to reach Vertex AI API', detail: error.message });
+    console.error('HF proxy error:', error);
+    res.status(502).json({ error: error.message || 'Failed to reach Hugging Face API' });
   }
 };
