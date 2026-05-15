@@ -1,0 +1,16 @@
+{
+  "buildCommand": "cd apps/angular-image-editor && npm run build",
+  "outputDirectory": "apps/angular-image-editor/dist/angular-image-editor",
+  "functions": {
+    "api/**/*.ts": {
+      "memory": 512,
+      "maxDuration": 60
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
