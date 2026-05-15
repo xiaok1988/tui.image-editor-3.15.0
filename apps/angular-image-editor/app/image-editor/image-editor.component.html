@@ -1,0 +1,23 @@
+<div class="editor-wrapper">
+  <div #editorContainer class="tui-image-editor-container"></div>
+  
+  <!-- AI Panel Toggle Button -->
+  <button 
+    class="ai-toggle-btn"
+    (click)="toggleAiPanel()"
+    title="AI Image Generation"
+  >
+    🎨 AI
+  </button>
+  
+  <!-- AI Panel Overlay -->
+  <div *ngIf="showAiPanel" class="ai-panel-overlay" (click)="toggleAiPanel()"></div>
+  
+  <!-- AI Panel -->
+  <div *ngIf="showAiPanel" class="ai-panel-container">
+    <app-ai-panel 
+      (close)="toggleAiPanel()"
+      (imageGenerated)="onImageGenerated($event)"
+    ></app-ai-panel>
+  </div>
+</div>

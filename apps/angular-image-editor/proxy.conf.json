@@ -1,0 +1,19 @@
+{
+  "/api": {
+    "target": "https://us-central1-aiplatform.googleapis.com",
+    "secure": true,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/api": ""
+    },
+    "timeout": 600000,
+    "proxyTimeout": 600000,
+    "logLevel": "debug",
+    "followRedirects": true,
+    "toProxy": true,
+    "headers": {
+      "Connection": "keep-alive",
+      "Authorization": "Bearer ya29.a0AQvPyIPmjh2PYtvhmWknQJ3_GeBTEwGqV95OcvehQAaBFmVDK7FSU2bi2161e9Ddd39Kf_IWSZ1NRlpwcrET1rLtGjW5znXJYPkusvaE6qGJTIJqrppJcbn6PYT60CbhL8eGpyv-JDozlu-0_ehcw_r5p2m_AXEA054_tfb2UENtVFNLSXdzObZ_dwkpz1OaJ_WMT7dpcRE2aCgYKAQcSARYSFQHGX2Mix3nXT912HBqpF9DuoYz_eQ0211"
+    }
+  }
+}

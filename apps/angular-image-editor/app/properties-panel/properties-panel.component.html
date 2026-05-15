@@ -1,0 +1,139 @@
+<div class="properties-panel" [class.modal]="isModal">
+  <div class="panel-header">
+    <h3>Properties</h3>
+    <button
+      *ngIf="isModal"
+      class="close-button"
+      (click)="onClose()"
+      mat-icon-button
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <div class="panel-content" *ngIf="properties; else noSelection">
+    <!-- Common Properties -->
+    <div class="property-section">
+      <h4>Fill</h4>
+      <div class="property-row">
+        <label>Color</label>
+        <div class="color-input">
+          <input
+            type="color"
+            [(ngModel)]="fillColor"
+            (ngModelChange)="onPropertyChange()"
+          />
+          <span class="color-value">{{ fillColor }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Shape Properties -->
+    <div class="property-section" *ngIf="hasShapeProperties">
+      <h4>Stroke</h4>
+      <div class="property-row">
+        <label>Color</label>
+        <div class="color-input">
+          <input
+            type="color"
+            [(ngModel)]="strokeColor"
+            (ngModelChange)="onPropertyChange()"
+          />
+          <span class="color-value">{{ strokeColor }}</span>
+        </div>
+      </div>
+      <div class="property-row">
+        <label>Width</label>
+        <input
+          type="number"
+          [(ngModel)]="strokeWidth"
+          (ngModelChange)="onPropertyChange()"
+          min="0"
+          max="20"
+          step="0.5"
+        />
+      </div>
+    </div>
+
+    <!-- Text Properties -->
+    <div class="property-section" *ngIf="hasTextProperties">
+      <h4>Text</h4>
+      <div class="property-row">
+        <label>Font</label>
+        <select [(ngModel)]="fontFamily" (ngModelChange)="onPropertyChange()">
+          <option value="Arial">Arial</option>
+          <option value="Helvetica">Helvetica</option>
+          <option value="Times New Roman">Times New Roman</option>
+          <option value="Georgia">Georgia</option>
+          <option value="Verdana">Verdana</option>
+          <option value="Courier New">Courier New</option>
+        </select>
+      </div>
+      <div class="property-row">
+        <label>Size</label>
+        <input
+          type="number"
+          [(ngModel)]="fontSize"
+          (ngModelChange)="onPropertyChange()"
+          min="8"
+          max="200"
+        />
+      </div>
+      <div class="property-row">
+        <label>Weight</label>
+        <select [(ngModel)]="fontWeight" (ngModelChange)="onPropertyChange()">
+          <option value="normal">Normal</option>
+          <option value="bold">Bold</option>
+          <option value="lighter">Lighter</option>
+        </select>
+      </div>
+      <div class="property-row">
+        <label>Align</label>
+        <div class="button-group">
+          <button
+            [class.active]="textAlign === 'left'"
+            (click)="textAlign = 'left'; onPropertyChange()"
+          >
+            <mat-icon>format_align_left</mat-icon>
+          </button>
+          <button
+            [class.active]="textAlign === 'center'"
+            (click)="textAlign = 'center'; onPropertyChange()"
+          >
+            <mat-icon>format_align_center</mat-icon>
+          </button>
+          <button
+            [class.active]="textAlign === 'right'"
+            (click)="textAlign = 'right'; onPropertyChange()"
+          >
+            <mat-icon>format_align_right</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Opacity -->
+    <div class="property-section">
+      <h4>Opacity</h4>
+      <div class="property-row">
+        <input
+          type="range"
+          [(ngModel)]="opacity"
+          (ngModelChange)="onPropertyChange()"
+          min="0"
+          max="1"
+          step="0.1"
+          class="opacity-slider"
+        />
+        <span class="opacity-value">{{ (opacity * 100).toFixed(0) }}%</span>
+      </div>
+    </div>
+  </div>
+
+  <ng-template #noSelection>
+    <div class="no-selection">
+      <mat-icon>touch_app</mat-icon>
+      <p>Select an element to edit its properties</p>
+    </div>
+  </ng-template>
+</div>

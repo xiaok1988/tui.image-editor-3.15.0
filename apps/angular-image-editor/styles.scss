@@ -1,0 +1,499 @@
+@use '@angular/material' as mat;
+
+// Import creaition theme
+@use './styles/creaition-theme' as theme;
+
+// Define color palettes using standard Angular Material palettes
+$creaition-primary: mat.define-palette(mat.$indigo-palette, 800);
+$creaition-accent: mat.define-palette(mat.$indigo-palette, 600);
+$creaition-warn: mat.define-palette(mat.$red-palette);
+
+$creaition-theme: mat.define-light-theme((
+  color: (
+    primary: $creaition-primary,
+    accent: $creaition-accent,
+    warn: $creaition-warn,
+  ),
+  typography: mat.define-typography-config(
+    $font-family: '"Strokeweight 080", "Eina03-Regular", sans-serif',
+  ),
+  density: 0,
+));
+
+@include mat.core();
+@include mat.all-component-themes($creaition-theme);
+@include theme.creaition-theme();
+
+// ============================================
+// Custom Fonts
+// ============================================
+@font-face {
+  font-family: 'Strokeweight 080';
+  src: url('/assets/fonts/stroke Weight 080.otf');
+  font-weight: normal;
+}
+@font-face {
+  font-family: 'Eina03-Regular';
+  src: url('/assets/fonts/Eina03 Regular.ttf');
+  font-weight: normal;
+}
+@font-face {
+  font-family: 'Strokeweight 080 R12';
+  src: url('/assets/fonts/stroke Weight 080rotateR12.otf');
+  font-weight: normal;
+}
+@font-face {
+  font-family: 'Eina03-Regular Italic';
+  src: url('/assets/fonts/Eina03 Regular Italic.ttf');
+  font-weight: normal;
+}
+
+// ============================================
+// Responsive Breakpoints
+// ============================================
+$breakpoints: (
+  sm: 640px,
+  md: 768px,
+  lg: 1024px,
+  xl: 1280px,
+) !default;
+
+// ============================================
+// Global Styles
+// ============================================
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Strokeweight 080', 'Eina03-Regular', sans-serif;
+  background-color: #f0f0f0;
+  overflow: hidden;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+li {
+  list-style: none;
+}
+
+:root {
+  --stroke-weight: 400;
+}
+
+// ============================================
+// App Root
+// ============================================
+app-root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+// ============================================
+// Mobile-First Responsive Container
+// ============================================
+.responsive-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  @media (min-width: map-get($breakpoints, md)) {
+    flex-direction: row;
+  }
+}
+
+// ============================================
+// Editor Area
+// ============================================
+.editor-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+
+  @media (min-width: map-get($breakpoints, lg)) {
+    flex-direction: row;
+  }
+}
+
+.editor-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+// ============================================
+// Toolbar (collapses on mobile)
+// ============================================
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background-color: #fff;
+  border-bottom: 1px solid #e0e0e0;
+  gap: 8px;
+
+  // Mobile: wrap and compact
+  @media (max-width: map-get($breakpoints, sm)) {
+    padding: 4px 8px;
+    flex-wrap: wrap;
+  }
+}
+
+.toolbar-section {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  @media (max-width: map-get($breakpoints, sm)) {
+    gap: 2px;
+  }
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 24px;
+  background-color: #e0e0e0;
+  margin: 0 8px;
+
+  @media (max-width: map-get($breakpoints, sm)) {
+    display: none;
+  }
+}
+
+// ============================================
+// Creaition Button Styles
+// ============================================
+.btn-creaition {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 35px;
+  padding: 0 20px;
+  font-family: 'Strokeweight 080', 'Eina03-Regular', sans-serif;
+  font-size: 12px;
+  border-radius: 50px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+
+  &:hover, &:active {
+    font-family: 'Strokeweight 080 R12', 'Eina03-Regular Italic', sans-serif;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.btn-creaition-primary {
+  @extend .btn-creaition;
+  background-color: #000;
+  color: #fff;
+  border-color: #000;
+
+  &:hover, &:active {
+    background-color: #fff;
+    color: #000;
+  }
+}
+
+.btn-creaition-secondary {
+  @extend .btn-creaition;
+  background-color: #fff;
+  color: #000;
+  border-color: #000;
+
+  &:hover, &:active {
+    background-color: #000;
+    color: #fff;
+  }
+}
+
+.btn-creaition-icon {
+  @extend .btn-creaition;
+  padding: 8px;
+  min-height: auto;
+  min-width: auto;
+  background-color: #f0f0f0;
+  color: #8a8a8a;
+  border: none;
+
+  &:hover, &:active {
+    background-color: #e0e0e0;
+    color: #bebebe;
+  }
+
+  &:disabled {
+    color: #434343;
+  }
+
+  .mat-icon {
+    width: 24px;
+    height: 24px;
+    font-size: 24px;
+  }
+}
+
+// ============================================
+// Properties Panel (modal on mobile)
+// ============================================
+.properties-panel {
+  width: 280px;
+  flex-shrink: 0;
+  background-color: #fff;
+  border-left: 1px solid #e0e0e0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+
+  // Mobile: hidden by default, becomes modal
+  @media (max-width: map-get($breakpoints, md)) {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 300px;
+    z-index: 1000;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+
+    &.open {
+      transform: translateX(0);
+    }
+  }
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid #e0e0e0;
+
+  h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 500;
+  }
+}
+
+.panel-content {
+  padding: 16px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.panel-section {
+  margin-bottom: 16px;
+
+  label {
+    display: block;
+    font-size: 12px;
+    color: #8a8a8a;
+    margin-bottom: 4px;
+  }
+
+  input, select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    background-color: #fff;
+    transition: border-color 0.2s;
+
+    &:focus {
+      outline: none;
+      border-color: #000;
+    }
+  }
+}
+
+// ============================================
+// Mobile FAB Button
+// ============================================
+.fab-button {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 999;
+
+  @media (min-width: map-get($breakpoints, md)) {
+    display: none;
+  }
+}
+
+// ============================================
+// Modal Overlay
+// ============================================
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+
+  @media (min-width: map-get($breakpoints, md)) {
+    display: none;
+  }
+}
+
+// ============================================
+// TUI Image Editor Overrides
+// ============================================
+.tui-image-editor-container {
+  .tui-image-editor-controls-buttons,
+  .tui-image-editor-header-buttons {
+    display: none !important;
+  }
+
+  .tui-image-editor-submenu .tui-image-editor-submenu-item label,
+  button,
+  .tui-image-editor-header-buttons > div,
+  .tui-image-editor-label,
+  .tui-image-editor-range {
+    font-family: 'Strokeweight 080', 'Eina03-Regular', sans-serif !important;
+  }
+
+  button {
+    background-color: #fff !important;
+    color: #000 !important;
+    min-height: 35px !important;
+    border-radius: 50px !important;
+    border: 1px solid #000 !important;
+    padding: 2px 20px !important;
+  }
+
+  .tui-image-editor-header-buttons > div {
+    background-color: #000 !important;
+    color: #fff !important;
+    min-height: 35px !important;
+    border-radius: 50px !important;
+    border: none !important;
+    padding: 2px 20px !important;
+  }
+
+  button:hover,
+  button:active {
+    background-color: #000 !important;
+    color: #fff !important;
+  }
+
+  .tui-image-editor-header-buttons > div:hover {
+    background-color: #fff !important;
+    color: #000 !important;
+    border: 1px solid #000 !important;
+  }
+
+  &.left {
+    .tui-image-editor-controls,
+    .tui-image-editor-menu {
+      background-color: #f0f0f0 !important;
+      float: right;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 4px;
+      li {
+        margin: 4px; 
+      }
+    }
+
+    .tui-image-editor-menu svg,
+    .tui-image-editor-menu path,
+    .tui-image-editor-menu use {
+      fill: #000 !important;
+      stroke: #000 !important;
+    }
+  }
+
+  .tui-image-editor-submenu {
+    background-color: #fff !important;
+    // TUI Image Editor 通过 JavaScript 控制显示/隐藏，不强制设置 display
+  }
+
+  // 确保菜单按钮可点击
+  .tui-image-editor-menu .tui-image-editor-item {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    position: relative !important;
+
+    &:hover {
+      opacity: 0.7 !important;
+    }
+
+    &.active {
+      opacity: 1 !important;
+    }
+  }
+
+  // Partition line (分割线)
+  .tui-image-editor-icpartition {
+    display: block !important;
+    width: 1px !important;
+    background-color: #e0e0e0 !important;
+    margin: 4px 4px !important;
+  }
+
+  .tui-image-editor-icpartition.vertical {
+    width: 1px !important;
+    height: 24px !important;
+    margin: auto 4px !important;
+  }
+}
+
+// Help menu horizontal display
+.tui-image-editor-help-menu {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  z-index: 100 !important;
+  pointer-events: auto !important;
+  position: relative !important;
+
+  > button, > div, > input, > li {
+    pointer-events: auto !important;
+  }
+
+  > button {
+    display: inline-flex !important;
+    margin: 2px 4px !important;
+    z-index: 101 !important;
+    position: relative !important;
+    cursor: pointer !important;
+  }
+
+  // Ensure buttons are clickable
+  button {
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+}
+
+// Fix for help menu items
+.tui-image-editor-help-menu li {
+  display: inline-flex !important;
+  pointer-events: auto !important;
+  margin: 4px 4px;
+  padding: 6px 8px;
+}
+
+// History (undo/redo) - 限制宽度
+.tie-panel-history {
+  display: none;
+}

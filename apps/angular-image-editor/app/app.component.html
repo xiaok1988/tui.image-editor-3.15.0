@@ -1,0 +1,18 @@
+<div class="app-container">
+  <app-toolbar
+    (action)="onToolbarAction($event)"
+    (fileSelected)="onFileSelected($event)"
+  ></app-toolbar>
+  <app-image-editor
+    #imageEditor
+    [theme]="editorTheme"
+    [menu]="menuItems"
+    initMenu="filter"
+    menuBarPosition="left"
+    (submenuChanged)="onSubmenuChanged($event)"
+    (imageLoaded)="onImageLoaded($event)"
+    (objectAdded)="onObjectAdded($event)"
+    (objectSelected)="onObjectSelected($event)"
+    (objectRemoved)="onObjectRemoved($event)"
+  ></app-image-editor>
+</div>

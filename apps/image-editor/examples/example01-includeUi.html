@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>0. Design</title>
+    <link
+      type="text/css"
+      href="https://uicdn.toast.com/tui-color-picker/v2.2.6/tui-color-picker.css"
+      rel="stylesheet"
+    />
+    <link type="text/css" href="../dist/tui-image-editor.css" rel="stylesheet" />
+    <style>
+      /* 加载本地自定义字体 */
+      @font-face {
+        font-family: 'Strokeweight 080';
+        src: url('css/fonts/stroke Weight 080.otf');
+        font-weight: normal;
+      }
+      @font-face {
+        font-family: 'Eina03-Regular';
+        src: url('css/fonts/Eina03 Regular.ttf');
+        font-weight: normal;
+      }
+      @font-face {
+        font-family: 'Strokeweight 080 R12';
+        src: url('css/fonts/stroke Weight 080rotateR12.otf');
+        font-weight: normal;
+      }
+      @font-face {
+        font-family: 'Eina03-Regular Italic';
+        src: url('css/fonts/Eina03 Regular Italic.ttf');
+        font-weight: normal;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
+      /* 覆盖默认字体 */
+      .tui-image-editor-container .tui-image-editor-submenu .tui-image-editor-submenu-item label,
+      .tui-image-editor-container button,
+      .tui-image-editor-container .tui-image-editor-header-buttons > div,
+      .tui-image-editor-container .tui-image-editor-label,
+      .tui-image-editor-container .tui-image-editor-range {
+        font-family: 'Strokeweight 080', 'Eina03-Regular' !important;
+      }
+
+      .tui-image-editor-container
+        .tui-image-editor-submenu
+        .tui-image-editor-submenu-item
+        label:hover,
+      .tui-image-editor-container button:hover,
+      .tui-image-editor-container .tui-image-editor-header-buttons > div:hover,
+      .tui-image-editor-container .tui-image-editor-label:hover,
+      .tui-image-editor-container .tui-image-editor-range:hover {
+        font-family: 'Strokeweight 080 R12', 'Eina03-Regular Italic' !important;
+      }
+      .tui-image-editor-container button {
+        background-color: #fff !important;
+        color: #000 !important;
+        min-height: 35px !important;
+        border-radius: 50px !important;
+        border: 1px solid #000 !important;
+        padding: 2px 20px !important;
+      }
+      .tui-image-editor-container .tui-image-editor-header-buttons > div {
+        background-color: #000 !important;
+        color: #fff !important;
+        min-height: 35px !important;
+        border-radius: 50px !important;
+        border: none !important;
+        padding: 2px 20px !important;
+      }
+      .tui-image-editor-container button:hover,
+      .tui-image-editor-container button:active {
+        background-color: #000 !important;
+        color: #fff !important;
+        min-height: 35px !important;
+        border-radius: 50px !important;
+        border: none !important;
+      }
+      .tui-image-editor-container .tui-image-editor-header-buttons > div:hover {
+        background-color: #fff !important;
+        color: #000 !important;
+        min-height: 35px !important;
+        border-radius: 50px !important;
+        border: 1px solid #000 !important;
+      }
+
+      .tui-image-editor-container.left .tui-image-editor-controls,
+      .tui-image-editor-container.left .tui-image-editor-menu {
+        background-color: #f0f0f0 !important;
+      }
+      .tui-image-editor-container.left .tui-image-editor-menu svg,
+      .tui-image-editor-container.left .tui-image-editor-menu path,
+      .tui-image-editor-container.left .tui-image-editor-menu use,
+      .tui-image-editor-help-menu.right .tui-image-editor-item svg,
+      .tui-image-editor-help-menu.right .tui-image-editor-item path,
+      .tui-image-editor-help-menu.right .tui-image-editor-item use {
+        fill: #000 !important;
+        fill-rule: evenodd;
+        stroke: #000 !important;
+      }
+      .tui-image-editor-submenu {
+        background-color: #fff !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="tui-image-editor-container"></div>
+    <script
+      type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/4.4.0/fabric.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://uicdn.toast.com/tui.code-snippet/v1.5.0/tui-code-snippet.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://uicdn.toast.com/tui-color-picker/v2.2.6/tui-color-picker.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/1.3.3/FileSaver.min.js"
+    ></script>
+    <script type="text/javascript" src="../dist/tui-image-editor.js"></script>
+    <script type="text/javascript" src="js/theme/creaition-theme.js"></script>
+    <script>
+      // Image editor
+      var imageEditor = new tui.ImageEditor('#tui-image-editor-container', {
+        includeUI: {
+          loadImage: {
+            path: 'img/sampleImage2.png',
+            name: 'SampleImage',
+          },
+          theme: creaitionTheme, // or whiteTheme
+          initMenu: 'filter',
+          menuBarPosition: 'left',
+        },
+        cssMaxWidth: 700,
+        cssMaxHeight: 500,
+        usageStatistics: false,
+      });
+      window.onresize = function () {
+        imageEditor.ui.resizeEditor();
+      };
+    </script>
+  </body>
+</html>

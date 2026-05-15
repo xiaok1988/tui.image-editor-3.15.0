@@ -1,0 +1,16 @@
+.app-container {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+app-toolbar {
+  flex-shrink: 0;
+}
+
+app-image-editor {
+  flex: 1;
+  overflow: hidden;
+}

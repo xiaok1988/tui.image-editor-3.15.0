@@ -1,0 +1,79 @@
+<div class="toolbar">
+  <!-- Tool Buttons -->
+  <div class="toolbar-section">
+    <button
+      *ngFor="let btn of toolButtons"
+      class="btn-creaition-icon"
+      [disabled]="isToolButtonDisabled(btn)"
+      [matTooltip]="btn.tooltip"
+      matTooltipPosition="below"
+      (click)="onAction(btn.action)"
+    >
+      <mat-icon>{{ btn.icon }}</mat-icon>
+    </button>
+  </div>
+
+  <div class="toolbar-divider"></div>
+
+  <!-- Transform Buttons -->
+  <div class="toolbar-section">
+    <button
+      *ngFor="let btn of transformButtons"
+      class="btn-creaition-icon"
+      [disabled]="disabled"
+      [matTooltip]="btn.tooltip"
+      matTooltipPosition="below"
+      (click)="onAction(btn.action)"
+    >
+      <mat-icon>{{ btn.icon }}</mat-icon>
+    </button>
+  </div>
+
+  <div class="toolbar-divider"></div>
+
+  <!-- Action Buttons -->
+  <div class="toolbar-section">
+    <button
+      *ngFor="let btn of actionButtons"
+      class="btn-creaition-icon"
+      [disabled]="disabled"
+      [matTooltip]="btn.tooltip"
+      matTooltipPosition="below"
+      (click)="onAction(btn.action)"
+    >
+      <mat-icon>{{ btn.icon }}</mat-icon>
+    </button>
+  </div>
+
+  <div class="toolbar-spacer"></div>
+
+  <!-- Load & Save Buttons -->
+  <div class="toolbar-section toolbar-actions">
+    <button
+      class="btn-creaition-secondary"
+      [disabled]="disabled"
+      (click)="triggerFileInput()"
+    >
+      <mat-icon>upload</mat-icon>
+      <span class="btn-text">Load</span>
+    </button>
+
+    <button
+      class="btn-creaition-primary"
+      [disabled]="disabled"
+      (click)="onSave()"
+    >
+      <mat-icon>download</mat-icon>
+      <span class="btn-text">Save</span>
+    </button>
+  </div>
+
+  <!-- Hidden File Input -->
+  <input
+    id="file-input"
+    type="file"
+    accept="image/*"
+    class="hidden-file-input"
+    (change)="onFileChange($event)"
+  />
+</div>

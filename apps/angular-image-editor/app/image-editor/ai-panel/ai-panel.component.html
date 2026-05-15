@@ -1,0 +1,118 @@
+<div class="ai-panel">
+  <div class="ai-panel-header">
+    <h3>🎨 AI Image Generation</h3>
+    <button class="close-btn" (click)="closePanel()">×</button>
+  </div>
+
+  <div class="ai-panel-content">
+    <!-- Model Selection -->
+    <div class="section">
+      <label class="label">AI Model</label>
+      <select 
+        [(ngModel)]="selectedModelId" 
+        class="model-select"
+        (change)="onModelChange()"
+      >
+        <option *ngFor="let model of models" [value]="model.id">
+          {{ model.name }}
+        </option>
+      </select>
+    </div>
+
+    <!-- Image-to-Image Toggle -->
+    <div class="section">
+      <label class="toggle-label">
+        <input 
+          type="checkbox" 
+          [(ngModel)]="isImageToImage"
+          (change)="toggleImageToImage()"
+        />
+        <span>Image-to-Image Generation</span>
+      </label>
+    </div>
+
+    <!-- Prompt Input -->
+    <div class="section">
+      <label class="label">Prompt</label>
+      <textarea 
+        [(ngModel)]="prompt"
+        class="prompt-input"
+        placeholder="Enter your prompt..."
+        rows="3"
+        (input)="onPromptChange()"
+      ></textarea>
+      
+      <!-- Suggestions -->
+      <div *ngIf="suggestions.length > 0" class="suggestions">
+        <button 
+          *ngFor="let suggestion of suggestions" 
+          class="suggestion-btn"
+          (click)="applySuggestion(suggestion)"
+        >
+          {{ suggestion }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Negative Prompt -->
+    <div class="section">
+      <label class="label">Negative Prompt</label>
+      <textarea 
+        [(ngModel)]="negativePrompt"
+        class="prompt-input"
+        placeholder="Things to exclude..."
+        rows="2"
+      ></textarea>
+    </div>
+
+    <!-- Dimensions -->
+    <div class="section dimensions">
+      <div>
+        <label class="label">Width</label>
+        <input 
+          type="number" 
+          [(ngModel)]="width" 
+          class="dim-input"
+          min="256"
+          [max]="maxWidth"
+        />
+      </div>
+      <div>
+        <label class="label">Height</label>
+        <input 
+          type="number" 
+          [(ngModel)]="height" 
+          class="dim-input"
+          min="256"
+          [max]="maxHeight"
+        />
+      </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div *ngIf="isGenerating" class="section progress-section">
+      <div class="progress-label">
+        <span>{{ progressMessage }}</span>
+        <span class="progress-percentage">{{ Math.round(progress) }}%</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" [style.width]="progress + '%'"></div>
+      </div>
+    </div>
+
+    <!-- Error Message -->
+    <div *ngIf="errorMessage" class="error-message">
+      {{ errorMessage }}
+    </div>
+
+    <!-- Generate Button -->
+    <button 
+      class="generate-btn"
+      [disabled]="!canGenerate || isGenerating"
+      (click)="generateImage()"
+    >
+      <span *ngIf="!isGenerating">🚀 Generate Image</span>
+      <span *ngIf="isGenerating">Generating...</span>
+    </button>
+  </div>
+</div>
