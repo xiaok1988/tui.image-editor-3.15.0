@@ -1,16 +1,14 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist/angular-image-editor",
-  "functions": {
-    "api/**/*.{js,mjs}": {
-      "memory": 512,
-      "maxDuration": 60
-    }
-  },
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/((?!api/).*)",
       "destination": "/index.html"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "/api/:path*"
     }
   ]
 }

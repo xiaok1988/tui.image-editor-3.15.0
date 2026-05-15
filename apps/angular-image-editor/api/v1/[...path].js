@@ -1,6 +1,6 @@
 const VERTEX_AI_BASE_URL = 'https://us-central1-aiplatform.googleapis.com';
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   // Only allow POST (the Vertex AI predict endpoint requires POST)
   if (req.method !== 'POST') {
     return res.status(405).json({
@@ -9,12 +9,12 @@ export default async function handler(req, res) {
     });
   }
 
-  const { path } = req.query;
-  if (!path || !Array.isArray(path)) {
+  const pathSegments = req.query.path;
+  if (!pathSegments || !Array.isArray(pathSegments)) {
     return res.status(400).json({ error: 'Invalid API path' });
   }
 
-  const targetPath = '/v1/' + path.join('/');
+  const targetPath = '/v1/' + pathSegments.join('/');
   const targetUrl = `${VERTEX_AI_BASE_URL}${targetPath}`;
 
   const accessToken = process.env.VERTEX_AI_ACCESS_TOKEN;
@@ -44,4 +44,4 @@ export default async function handler(req, res) {
       message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
-}
+};
