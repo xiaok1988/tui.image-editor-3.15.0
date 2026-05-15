@@ -1,6 +1,6 @@
 {
-  "buildCommand": "cd apps/angular-image-editor && npm run build",
-  "outputDirectory": "apps/angular-image-editor/dist/angular-image-editor",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist/angular-image-editor",
   "functions": {
     "api/**/*.ts": {
       "memory": 512,
