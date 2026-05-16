@@ -82,8 +82,8 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
   @Input() menu: string[] = ['crop', 'flip', 'rotate', 'draw', 'shape', 'icon', 'text', 'filter'];
   @Input() initMenu = '';
   @Input() menuBarPosition: 'top' | 'bottom' | 'left' | 'right' = 'left';
-  @Input() cssMaxWidth = 700;
-  @Input() cssMaxHeight = 500;
+  @Input() cssMaxWidth = 99999;
+  @Input() cssMaxHeight = 99999;
 
   // Outputs
   @Output() imageLoaded = new EventEmitter<{ width: number; height: number }>();
@@ -209,7 +209,15 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
     try {
       this.editor = new tuiImageEditor(this.editorContainer.nativeElement, options);
       this.setupEventListeners();
-      this.resizeToWindow();
+
+      // Defer resize to ensure the container has its final layout dimensions
+      requestAnimationFrame(() => {
+        this.resizeToWindow();
+        requestAnimationFrame(() => {
+          this.resizeToWindow(); // double frame for safety
+        });
+      });
+
       this.removeUnwantedElements();
 
       // Wait for DOM to be ready before binding help-menu events
@@ -238,6 +246,8 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
 
     const zoomInBtn = this.editor.ui._buttonElements?.['zoomIn'];
     const zoomOutBtn = this.editor.ui._buttonElements?.['zoomOut'];
+    const deleteBtn = this.editor.ui._buttonElements?.['delete'];
+    const deleteAllBtn = this.editor.ui._buttonElements?.['deleteAll'];
 
     if (zoomInBtn) {
       zoomInBtn.addEventListener('click', (e: Event) => {
@@ -250,6 +260,23 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
       zoomOutBtn.addEventListener('click', (e: Event) => {
         e.preventDefault();
         this.zoomOut();
+      });
+    }
+
+    if (deleteBtn) {
+      deleteBtn.addEventListener('click', (e: Event) => {
+        e.preventDefault();
+        const activeObject = this.editor._graphics?.getActiveObject();
+        if (activeObject) {
+          this.deleteSelectedObject();
+        }
+      });
+    }
+
+    if (deleteAllBtn) {
+      deleteAllBtn.addEventListener('click', (e: Event) => {
+        e.preventDefault();
+        this.clearAll();
       });
     }
   }
@@ -279,8 +306,6 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
   private scaleContainer(zoom: number): void {
     const wrapper = this.editorContainer?.nativeElement.querySelector('.tui-image-editor-canvas-container') as HTMLElement;
     if (wrapper) {
-      wrapper.style.transform = `scale(${zoom})`;
-      wrapper.style.transformOrigin = 'top left';
       wrapper.style.width = `${100 * zoom}%`;
       wrapper.style.height = `${100 * zoom}%`;
     }
@@ -373,11 +398,28 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
 
   private loadImageToEditor(imageData: string): Promise<unknown> {
     const canvasImage = this.editor._graphics?.getCanvasImage();
+    let promise: Promise<unknown>;
+    
     if (!canvasImage) {
-      return this.editor.loadImageFromURL(imageData);
+      // First image - load as background and then convert to selectable object
+      promise = this.editor.loadImageFromURL(imageData, 'uploaded-image').then((sizeInfo: unknown) => {
+        // After loading as background, add it as a selectable object too
+        return this.editor.addImageObject(imageData).then(() => sizeInfo);
+      });
     } else {
-      return this.editor.addImageObject(imageData);
+      promise = this.editor.addImageObject(imageData);
     }
+    
+    // Ensure images are selectable after loading
+    return promise.then((result) => {
+      // Use setTimeout to ensure image is fully rendered before making it selectable
+      setTimeout(() => {
+        // Hide any active submenu first to ensure selection is enabled
+        this.hideAllSubmenus();
+        this.ensureCanvasSelectable();
+      }, 100);
+      return result;
+    });
   }
 
   private loadImageAsObject(imageData: string, fitToCanvas: boolean = true): Promise<unknown> {
@@ -731,16 +773,57 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
   private ensureCanvasSelectable(): void {
     const canvas = this.editor._graphics?.getCanvas();
     if (canvas) {
+      console.log('ensureCanvasSelectable called');
+      console.log('Canvas before:', {
+        selection: canvas.selection,
+        defaultCursor: canvas.defaultCursor,
+        objectsCount: canvas.getObjects().length
+      });
+      
       if (this.editor._graphics.getZoomMode() === 'hand') {
+        console.log('Ending hand mode');
         this.editor._graphics.endHandMode();
       }
+      
       canvas.selection = true;
       canvas.defaultCursor = 'default';
-      canvas.forEachObject((obj: any) => {
+      
+      // Use built-in method to make all objects selectable
+      if (this.editor._graphics.changeSelectableAll) {
+        console.log('Calling changeSelectableAll(true)');
+        this.editor._graphics.changeSelectableAll(true);
+      }
+      
+      // Additional settings for each object
+      canvas.forEachObject((obj: any, index: number) => {
+        console.log(`Object ${index} before:`, {
+          selectable: obj.selectable,
+          evented: obj.evented,
+          hasControls: obj.hasControls,
+          hasBorders: obj.hasBorders,
+          type: obj.type
+        });
+        
         obj.evented = true;
         obj.selectable = true;
+        obj.hasControls = true;
+        obj.hasBorders = true;
+        obj.hoverCursor = 'move';
+        
+        console.log(`Object ${index} after:`, {
+          selectable: obj.selectable,
+          evented: obj.evented,
+          hasControls: obj.hasControls,
+          hasBorders: obj.hasBorders
+        });
       });
-      console.log('ensureCanvasSelectable: objects count =', canvas.getObjects().length, 'selection =', canvas.selection);
+      
+      canvas.renderAll();
+      console.log('Canvas after render:', {
+        selection: canvas.selection,
+        defaultCursor: canvas.defaultCursor,
+        objectsCount: canvas.getObjects().length
+      });
     }
   }
 

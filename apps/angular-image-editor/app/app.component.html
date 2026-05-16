@@ -2,6 +2,8 @@
   <app-toolbar
     (action)="onToolbarAction($event)"
     (fileSelected)="onFileSelected($event)"
+    [hasUndo]="hasUndo"
+    [hasRedo]="hasRedo"
   ></app-toolbar>
   <app-image-editor
     #imageEditor
@@ -15,6 +17,7 @@
     (objectSelected)="onObjectSelected($event)"
     (objectActivated)="onObjectActivated($event)"
     (objectRemoved)="onObjectRemoved($event)"
+    (undoRedoState)="onUndoRedoStateChange($event)"
   ></app-image-editor>
   <app-properties-panel
     [properties]="selectedObjectProperties"

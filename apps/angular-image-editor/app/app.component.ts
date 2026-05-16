@@ -133,6 +133,10 @@ export class AppComponent implements OnInit {
   // Selected object properties for the properties panel
   selectedObjectProperties: ObjectProperties | null = null;
 
+  // Undo/redo state
+  hasUndo = false;
+  hasRedo = false;
+
   ngOnInit(): void {
     // Initialization handled by ImageEditorComponent
   }
@@ -147,6 +151,11 @@ export class AppComponent implements OnInit {
 
   onObjectSelected(obj: { id: number; type: string }): void {
     console.log('Object selected:', obj);
+  }
+
+  onUndoRedoStateChange(state: { hasUndo: boolean; hasRedo: boolean }): void {
+    this.hasUndo = state.hasUndo;
+    this.hasRedo = state.hasRedo;
   }
 
   onObjectActivated(props: ObjectProperties): void {
