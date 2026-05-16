@@ -16,6 +16,7 @@ export interface ObjectProperties {
   fontWeight?: string;
   textAlign?: string;
   opacity?: number;
+  [key: string]: unknown;
 }
 
 // Creaition theme matching example01-includeUi.html
@@ -129,6 +130,9 @@ export class AppComponent implements OnInit {
   // Current active submenu
   currentSubmenu: string | null = null;
 
+  // Selected object properties for the properties panel
+  selectedObjectProperties: ObjectProperties | null = null;
+
   ngOnInit(): void {
     // Initialization handled by ImageEditorComponent
   }
@@ -145,8 +149,22 @@ export class AppComponent implements OnInit {
     console.log('Object selected:', obj);
   }
 
+  onObjectActivated(props: ObjectProperties): void {
+    console.log('Object activated:', props);
+    this.selectedObjectProperties = props;
+  }
+
+  onPropertiesChange(props: ObjectProperties): void {
+    if (props.id && this.imageEditor) {
+      this.imageEditor.updateObjectProperties(props.id, props as Partial<ObjectProperties>);
+    }
+  }
+
   onObjectRemoved(obj: { id: number }): void {
     console.log('Object removed:', obj);
+    if (this.selectedObjectProperties?.id === obj.id) {
+      this.selectedObjectProperties = null;
+    }
   }
 
   onSubmenuChanged(event: { menuName: string | null }) {
@@ -224,7 +242,7 @@ export class AppComponent implements OnInit {
         this.imageEditor.rotate(90);
         break;
       case 'clear':
-        this.imageEditor.clear();
+        this.imageEditor.clearAll();
         break;
       case 'save':
         this.downloadImage();

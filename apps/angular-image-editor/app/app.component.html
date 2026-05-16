@@ -13,6 +13,11 @@
     (imageLoaded)="onImageLoaded($event)"
     (objectAdded)="onObjectAdded($event)"
     (objectSelected)="onObjectSelected($event)"
+    (objectActivated)="onObjectActivated($event)"
     (objectRemoved)="onObjectRemoved($event)"
   ></app-image-editor>
+  <app-properties-panel
+    [properties]="selectedObjectProperties"
+    (propertiesChange)="onPropertiesChange($event)"
+  ></app-properties-panel>
 </div>
