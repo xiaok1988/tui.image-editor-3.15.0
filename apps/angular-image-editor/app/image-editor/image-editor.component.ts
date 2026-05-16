@@ -388,11 +388,20 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
           scaleX = canvas.width / img.width;
           scaleY = canvas.height / img.height;
           scale = Math.min(scaleX, scaleY, 1);
+        } else {
+          canvas.width = img.width;
+          canvas.height = img.height;
+
+          const container = this.editorContainer?.nativeElement.querySelector('.tui-image-editor-canvas-container');
+          if (container) {
+            (container as HTMLElement).style.width = `${img.width}px`;
+            (container as HTMLElement).style.height = `${img.height}px`;
+          }
         }
 
         const fabricImg = new (window as any).fabric.Image(img, {
-          left: (canvas.width - img.width * scale) / 2,
-          top: (canvas.height - img.height * scale) / 2,
+          left: fitToCanvas ? (canvas.width - img.width * scale) / 2 : 0,
+          top: fitToCanvas ? (canvas.height - img.height * scale) / 2 : 0,
           scaleX: scale,
           scaleY: scale,
           selectable: true,
