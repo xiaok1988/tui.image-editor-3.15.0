@@ -2,10 +2,11 @@
   width: 100%;
   height: 100%;
   position: relative;
+  overflow: visible !important;
 }
 
-/* Ensure canvas area can receive selection events */
 :host ::ng-deep .tui-image-editor-canvas-container {
+  overflow: visible !important;
   pointer-events: auto !important;
 }
 

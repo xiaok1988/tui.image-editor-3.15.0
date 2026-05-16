@@ -389,14 +389,25 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
           scaleY = canvas.height / img.height;
           scale = Math.min(scaleX, scaleY, 1);
         } else {
-          canvas.width = img.width;
-          canvas.height = img.height;
+          const newWidth = img.width;
+          const newHeight = img.height;
 
-          const container = this.editorContainer?.nativeElement.querySelector('.tui-image-editor-canvas-container');
-          if (container) {
-            (container as HTMLElement).style.width = `${img.width}px`;
-            (container as HTMLElement).style.height = `${img.height}px`;
+          canvas.width = newWidth;
+          canvas.height = newHeight;
+
+          const wrapper = this.editorContainer?.nativeElement.querySelector('.tui-image-editor-canvas-container');
+          if (wrapper) {
+            (wrapper as HTMLElement).style.width = `${newWidth}px`;
+            (wrapper as HTMLElement).style.height = `${newHeight}px`;
           }
+
+          const canvasWrapper = this.editorContainer?.nativeElement.querySelector('.tui-image-editor-canvas-wrap');
+          if (canvasWrapper) {
+            (canvasWrapper as HTMLElement).style.width = `${newWidth}px`;
+            (canvasWrapper as HTMLElement).style.height = `${newHeight}px`;
+          }
+
+          this.editor.ui.resizeEditor();
         }
 
         const fabricImg = new (window as any).fabric.Image(img, {
