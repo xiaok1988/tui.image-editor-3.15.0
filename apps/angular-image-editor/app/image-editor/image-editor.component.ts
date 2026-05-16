@@ -361,7 +361,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
       reader.onload = (e) => {
         const imageData = e.target?.result as string;
         if (imageData) {
-          this.loadImageAsObject(imageData).then(resolve).catch(reject);
+          this.loadImageAsObject(imageData, false).then(resolve).catch(reject);
         } else {
           reject(new Error('Failed to read file'));
         }
@@ -392,8 +392,16 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
           const newWidth = img.width;
           const newHeight = img.height;
 
-          canvas.width = newWidth;
-          canvas.height = newHeight;
+          if (typeof canvas.setWidth === 'function') {
+            canvas.setWidth(newWidth);
+          } else {
+            canvas.width = newWidth;
+          }
+          if (typeof canvas.setHeight === 'function') {
+            canvas.setHeight(newHeight);
+          } else {
+            canvas.height = newHeight;
+          }
 
           const wrapper = this.editorContainer?.nativeElement.querySelector('.tui-image-editor-canvas-container');
           if (wrapper) {
@@ -407,6 +415,13 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
             (canvasWrapper as HTMLElement).style.height = `${newHeight}px`;
           }
 
+          const canvasElements = this.editorContainer?.nativeElement.querySelectorAll('canvas');
+          canvasElements?.forEach((canvasEl) => {
+            (canvasEl as HTMLCanvasElement).width = newWidth;
+            (canvasEl as HTMLCanvasElement).height = newHeight;
+          });
+
+          canvas.renderAll();
           this.editor.ui.resizeEditor();
         }
 
