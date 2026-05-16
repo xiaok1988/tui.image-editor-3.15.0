@@ -722,7 +722,6 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
   private loadImageWithRetry(imageData: string, retries: number): void {
     const canvas = this.editor?._graphics?.getCanvas();
 
-    // Check if canvas is ready
     if (!canvas || !canvas._objects) {
       if (retries > 0) {
         console.log(`Canvas not ready, retrying in 200ms (${retries} retries left)`);
@@ -736,73 +735,14 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
     }
 
     console.log('Loading AI-generated image into editor...');
-    console.log('Image data length:', imageData.length);
-    console.log('Image data starts with:', imageData.substring(0, 50));
 
-    // Validate image data
-    if (!imageData || !imageData.startsWith('data:image/')) {
-      console.error('Invalid image data format');
-      this.error.emit(new Error('Invalid image data format'));
-      return;
-    }
-
-    // Create a temporary image element
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-
-    // Add error handler
-    img.onerror = (error) => {
-      console.error('Image loading failed:', error);
-      console.error('Error details:', (error as any).message || 'Unknown error');
-      this.error.emit(new Error('Failed to load image: ' + (error as any).message));
-    };
-
-    img.onload = () => {
-      console.log('AI image loaded successfully, dimensions:', img.width, 'x', img.height);
-      console.log('Canvas size:', canvas.width, 'x', canvas.height);
-
-      let imageLoaded = false;
-
-      if (!imageLoaded && this.editor._graphics?.addImageObject) {
-        console.log('Using addImageObject method');
-        try {
-          this.editor._graphics.addImageObject(imageData).then(() => {
-            console.log('Image loaded via addImageObject');
-            imageLoaded = true;
-
-            this.ensureCanvasSelectable();
-            console.log('Canvas objects after addImageObject:', this.editor._graphics.getCanvas().getObjects().length);
-          }).catch((e: any) => {
-            console.log('addImageObject failed:', e);
-          });
-        } catch (e) {
-          console.log('addImageObject error:', e);
-        }
-      }
-
-      if (!imageLoaded && this.editor.loadImageFromURL) {
-        console.log('Falling back to loadImageFromURL (background)');
-        try {
-          const result = this.editor.loadImageFromURL(imageData);
-          if (result instanceof Promise) {
-            result.then(() => {
-              console.log('Image loaded as background via loadImageFromURL');
-              imageLoaded = true;
-            }).catch((e: any) => {
-              console.log('loadImageFromURL Promise failed:', e);
-            });
-          } else {
-            console.log('Image loaded as background via loadImageFromURL');
-            imageLoaded = true;
-          }
-        } catch (e) {
-          console.log('loadImageFromURL failed:', e);
-        }
-      }
-    };
-
-    // Set src AFTER onload and onerror handlers
-    console.log('Setting img.src to load image...');
-    img.src = imageData;
+    this.loadImageAsObject(imageData)
+      .then(() => {
+        console.log('AI image loaded successfully');
+      })
+      .catch((e: any) => {
+        console.error('Failed to load AI image:', e);
+        this.error.emit(new Error('Failed to load AI image'));
+      });
   }
 }
