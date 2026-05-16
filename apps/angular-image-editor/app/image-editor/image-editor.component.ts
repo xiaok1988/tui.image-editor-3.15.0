@@ -371,7 +371,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
     });
   }
 
-  private loadImageAsObject(imageData: string): Promise<unknown> {
+  private loadImageAsObject(imageData: string, fitToCanvas: boolean = true): Promise<unknown> {
     const canvas = this.editor._graphics?.getCanvas();
     if (!canvas) {
       return Promise.reject(new Error('Canvas not available'));
@@ -380,9 +380,15 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => {
-        const scaleX = canvas.width / img.width;
-        const scaleY = canvas.height / img.height;
-        const scale = Math.min(scaleX, scaleY, 1);
+        let scaleX = 1;
+        let scaleY = 1;
+        let scale = 1;
+
+        if (fitToCanvas) {
+          scaleX = canvas.width / img.width;
+          scaleY = canvas.height / img.height;
+          scale = Math.min(scaleX, scaleY, 1);
+        }
 
         const fabricImg = new (window as any).fabric.Image(img, {
           left: (canvas.width - img.width * scale) / 2,
@@ -736,7 +742,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
 
     console.log('Loading AI-generated image into editor...');
 
-    this.loadImageAsObject(imageData)
+    this.loadImageAsObject(imageData, false)
       .then(() => {
         console.log('AI image loaded successfully');
       })
