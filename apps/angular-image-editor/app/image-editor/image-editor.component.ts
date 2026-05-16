@@ -361,7 +361,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
       reader.onload = (e) => {
         const imageData = e.target?.result as string;
         if (imageData) {
-          this.editor.addImageObject(imageData).then(resolve).catch(reject);
+          this.loadImageToEditor(imageData).then(resolve).catch(reject);
         } else {
           reject(new Error('Failed to read file'));
         }
@@ -369,6 +369,15 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
       reader.onerror = () => reject(new Error('Failed to read file'));
       reader.readAsDataURL(file);
     });
+  }
+
+  private loadImageToEditor(imageData: string): Promise<unknown> {
+    const canvasImage = this.editor._graphics?.getCanvasImage();
+    if (!canvasImage) {
+      return this.editor.loadImageFromURL(imageData);
+    } else {
+      return this.editor.addImageObject(imageData);
+    }
   }
 
   private loadImageAsObject(imageData: string, fitToCanvas: boolean = true): Promise<unknown> {
@@ -777,7 +786,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
 
     console.log('Loading AI-generated image into editor...');
 
-    this.editor.addImageObject(imageData)
+    this.loadImageToEditor(imageData)
       .then(() => {
         console.log('AI image loaded successfully');
       })
