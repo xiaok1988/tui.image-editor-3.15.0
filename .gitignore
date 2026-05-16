@@ -77,4 +77,4 @@ dist
 node_modules/
 **/node_modules/
 
-apps/angular-image-editor/.angular
+apps/angular-image-editor/.angular/
