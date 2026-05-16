@@ -157,10 +157,10 @@ export class AiImageGenerationService {
     };
 
     if (request.width) {
-      body.width = request.width;
+      body['width'] = request.width;
     }
     if (request.height) {
-      body.height = request.height;
+      body['height'] = request.height;
     }
 
     return this.http
