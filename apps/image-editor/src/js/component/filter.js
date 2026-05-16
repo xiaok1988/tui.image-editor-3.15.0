@@ -141,7 +141,6 @@ class Filter extends Component {
    * @private
    */
   _apply(sourceImg, callback) {
-    sourceImg.filters.push();
     const result = sourceImg.applyFilters();
     if (result) {
       callback();
