@@ -149,12 +149,19 @@ export class AiImageGenerationService {
 
     const numImages = request.numImages || 1;
 
-    const body = {
+    const body: Record<string, unknown> = {
       model: request.model,
       prompt: request.prompt,
       negativePrompt: request.negativePrompt,
       numImages,
     };
+
+    if (request.width) {
+      body.width = request.width;
+    }
+    if (request.height) {
+      body.height = request.height;
+    }
 
     return this.http
       .post<{ images: string[]; model: string; prompt: string }>(this.apiEndpoint, body, {
