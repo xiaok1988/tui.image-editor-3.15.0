@@ -4,6 +4,15 @@
   position: relative;
 }
 
+/* Ensure canvas area can receive selection events */
+:host ::ng-deep .tui-image-editor-canvas-container {
+  pointer-events: auto !important;
+}
+
+:host ::ng-deep .tui-image-editor-canvas-container canvas {
+  pointer-events: auto !important;
+}
+
 /* Mobile-first responsive styles */
 
 /* Extra small devices (portrait phones, less than 640px) */

@@ -17,6 +17,21 @@ import tuiImageEditor from 'tui-image-editor';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ImageEditorInstance = any;
 
+// Object properties interface
+interface ObjectProperties {
+  id?: number;
+  type?: string;
+  fill?: string;
+  stroke?: string;
+  strokeWidth?: number;
+  fontSize?: number;
+  fontFamily?: string;
+  fontWeight?: string;
+  textAlign?: string;
+  opacity?: number;
+  [key: string]: unknown;
+}
+
 // Default theme
 const DEFAULT_THEME = {
   'common.bi.image': '',
@@ -74,6 +89,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
   @Output() imageLoaded = new EventEmitter<{ width: number; height: number }>();
   @Output() objectAdded = new EventEmitter<{ id: number; type: string }>();
   @Output() objectSelected = new EventEmitter<{ id: number; type: string }>();
+  @Output() objectActivated = new EventEmitter<ObjectProperties>();
   @Output() objectRemoved = new EventEmitter<{ id: number }>();
   @Output() undoRedoState = new EventEmitter<{ hasUndo: boolean; hasRedo: boolean }>();
   @Output() submenuChanged = new EventEmitter<{ menuName: string | null }>();
@@ -213,98 +229,60 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
   }
 
   private bindHelpMenuEvents(): void {
-    // Ensure the editor's native help-menu events are activated
-    if (this.editor?.ui?.activeMenuEvent) {
-      console.log('Binding help menu event');
-      this.editor.ui.activeMenuEvent();
+    if (!this.editor?.ui?.activeMenuEvent) {
+      return;
+    }
 
-      // Manually bind click events to help-menu buttons
-      const helpButtons = [
-        'zoomIn',
-        'zoomOut',
-        'hand',
-        'history',
-        'undo',
-        'redo',
-        'reset',
-        'delete',
-        'deleteAll',
-      ];
+    this.editor.ui.activeMenuEvent();
+    this.ensureCanvasSelectable();
 
-      helpButtons.forEach((buttonName) => {
-        const buttonElement = this.editor.ui._buttonElements[buttonName];
-        if (buttonElement) {
-          // Remove any existing listeners and add our own
-          buttonElement.addEventListener('click', (event: Event) => {
-            console.log('Help button clicked:', buttonName);
-            event.preventDefault();
-            event.stopPropagation();
+    const zoomInBtn = this.editor.ui._buttonElements?.['zoomIn'];
+    const zoomOutBtn = this.editor.ui._buttonElements?.['zoomOut'];
 
-            if (buttonName === 'zoomIn') {
-              // zoomIn action toggles zoom mode, but we want to directly zoom in
-              if (this.editor._graphics) {
-                try {
-                  // Get current zoom level and increase it
-                  const canvas = this.editor._graphics.getCanvas();
-                  const currentZoom = canvas.getZoom();
-                  const newZoom = currentZoom * 1.2; // Increase by 20%
-
-                  // Get center point of canvas
-                  const centerX = canvas.getWidth() / 2;
-                  const centerY = canvas.getHeight() / 2;
-
-                  // Apply zoom
-                  canvas.zoomToPoint({ x: centerX, y: centerY }, newZoom);
-                  canvas.renderAll();
-
-                  console.log('Directly zoomed in:', currentZoom, '->', newZoom);
-                } catch (err) {
-                  console.error('Error zooming in:', err);
-                }
-              } else {
-                console.warn('Graphics object not found');
-              }
-            } else if (buttonName === 'zoomOut') {
-              // zoomOut action may not work correctly, so we implement direct zoom out
-              if (this.editor._graphics) {
-                try {
-                  // Get current zoom level and decrease it
-                  const canvas = this.editor._graphics.getCanvas();
-                  const currentZoom = canvas.getZoom();
-                  const newZoom = Math.max(currentZoom / 1.2, 0.1); // Decrease by 20%, minimum 0.1
-
-                  // Get center point of canvas
-                  const centerX = canvas.getWidth() / 2;
-                  const centerY = canvas.getHeight() / 2;
-
-                  // Apply zoom
-                  canvas.zoomToPoint({ x: centerX, y: centerY }, newZoom);
-                  canvas.renderAll();
-
-                  console.log('Directly zoomed out:', currentZoom, '->', newZoom);
-                } catch (err) {
-                  console.error('Error zooming out:', err);
-                }
-              } else {
-                console.warn('Graphics object not found');
-              }
-            } else if (this.editor.ui._actions?.main?.[buttonName]) {
-              try {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                this.editor.ui._actions.main[buttonName]();
-                console.log('Action executed successfully:', buttonName);
-              } catch (err) {
-                console.error('Error executing action:', buttonName, err);
-              }
-            } else {
-              console.warn('Action not found:', buttonName);
-            }
-          });
-          console.log('Manually bound click event to:', buttonName);
-        } else {
-          console.warn('Button element not found:', buttonName);
-        }
+    if (zoomInBtn) {
+      zoomInBtn.addEventListener('click', (e: Event) => {
+        e.preventDefault();
+        this.zoomIn();
       });
+    }
+
+    if (zoomOutBtn) {
+      zoomOutBtn.addEventListener('click', (e: Event) => {
+        e.preventDefault();
+        this.zoomOut();
+      });
+    }
+  }
+
+  zoomIn(): void {
+    const canvas = this.editor._graphics?.getCanvas();
+    if (canvas) {
+      const currentZoom = canvas.getZoom();
+      const newZoom = Math.min(currentZoom * 1.2, 10);
+      canvas.setZoom(newZoom);
+      this.scaleContainer(newZoom);
+      canvas.renderAll();
+    }
+  }
+
+  zoomOut(): void {
+    const canvas = this.editor._graphics?.getCanvas();
+    if (canvas) {
+      const currentZoom = canvas.getZoom();
+      const newZoom = Math.max(currentZoom / 1.2, 0.1);
+      canvas.setZoom(newZoom);
+      this.scaleContainer(newZoom);
+      canvas.renderAll();
+    }
+  }
+
+  private scaleContainer(zoom: number): void {
+    const wrapper = this.editorContainer?.nativeElement.querySelector('.tui-image-editor-canvas-container') as HTMLElement;
+    if (wrapper) {
+      wrapper.style.transform = `scale(${zoom})`;
+      wrapper.style.transformOrigin = 'top left';
+      wrapper.style.width = `${100 * zoom}%`;
+      wrapper.style.height = `${100 * zoom}%`;
     }
   }
 
@@ -321,6 +299,10 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
 
     this.editor.on('selectObject', (obj: { id: number; type: string }) => {
       this.objectSelected.emit(obj);
+    });
+
+    this.editor.on('objectActivated', (props: ObjectProperties) => {
+      this.objectActivated.emit(props);
     });
 
     this.editor.on('removeObject', (obj: { id: number }) => {
@@ -374,7 +356,54 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
 
   // Public API
   loadImageFromFile(file: File): Promise<unknown> {
-    return this.editor.loadImageFromFile(file);
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const imageData = e.target?.result as string;
+        if (imageData) {
+          this.loadImageAsObject(imageData).then(resolve).catch(reject);
+        } else {
+          reject(new Error('Failed to read file'));
+        }
+      };
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  private loadImageAsObject(imageData: string): Promise<unknown> {
+    const canvas = this.editor._graphics?.getCanvas();
+    if (!canvas) {
+      return Promise.reject(new Error('Canvas not available'));
+    }
+
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const scaleX = canvas.width / img.width;
+        const scaleY = canvas.height / img.height;
+        const scale = Math.min(scaleX, scaleY, 1);
+
+        const fabricImg = new (window as any).fabric.Image(img, {
+          left: (canvas.width - img.width * scale) / 2,
+          top: (canvas.height - img.height * scale) / 2,
+          scaleX: scale,
+          scaleY: scale,
+          selectable: true,
+          hasControls: true,
+          hasBorders: true,
+        });
+
+        canvas.add(fabricImg);
+        canvas.setActiveObject(fabricImg);
+        canvas.renderAll();
+
+        this.ensureCanvasSelectable();
+        resolve(fabricImg);
+      };
+      img.onerror = () => reject(new Error('Failed to load image'));
+      img.src = imageData;
+    });
   }
 
   loadImageFromURL(url: string, name = 'SampleImage'): Promise<unknown> {
@@ -390,7 +419,18 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
   }
 
   clear(): void {
-    this.editor.clear();
+    this.editor.clearObjects();
+  }
+
+  clearAll(): void {
+    this.editor._graphics.removeAll(true);
+  }
+
+  deleteSelectedObject(): void {
+    const activeObject = this.editor._graphics?.getActiveObject();
+    if (activeObject) {
+      this.editor.removeObject(activeObject.id);
+    }
   }
 
   rotate(angle: number): Promise<number> {
@@ -415,6 +455,12 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
 
   getEditor(): ImageEditorInstance {
     return this.editor;
+  }
+
+  updateObjectProperties(id: number, properties: Partial<ObjectProperties>): void {
+    if (this.editor) {
+      this.editor.setObjectPropertiesQuietly(id, properties);
+    }
   }
 
   /**
@@ -628,9 +674,24 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
    * @param menuName - Name of the menu that was clicked
    */
   private handleMenuClick(menuName: string): void {
-    // Call setSubmenu to handle the actual menu switching logic
-    // including adding/removing CSS classes, updating button states, etc.
     this.setSubmenu(menuName);
+    this.ensureCanvasSelectable();
+  }
+
+  private ensureCanvasSelectable(): void {
+    const canvas = this.editor._graphics?.getCanvas();
+    if (canvas) {
+      if (this.editor._graphics.getZoomMode() === 'hand') {
+        this.editor._graphics.endHandMode();
+      }
+      canvas.selection = true;
+      canvas.defaultCursor = 'default';
+      canvas.forEachObject((obj: any) => {
+        obj.evented = true;
+        obj.selectable = true;
+      });
+      console.log('ensureCanvasSelectable: objects count =', canvas.getObjects().length, 'selection =', canvas.selection);
+    }
   }
 
   /**
@@ -700,135 +761,43 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
       console.log('AI image loaded successfully, dimensions:', img.width, 'x', img.height);
       console.log('Canvas size:', canvas.width, 'x', canvas.height);
 
-      // Try multiple approaches to load the image
       let imageLoaded = false;
 
-      // Approach 1: Use editor's loadImageFromURL method directly
-      if (!imageLoaded && this.editor.loadImageFromURL) {
-        console.log('Approach 1: Using loadImageFromURL method');
+      if (!imageLoaded && this.editor._graphics?.addImageObject) {
+        console.log('Using addImageObject method');
         try {
-          // Check if it's a function that takes callback
+          this.editor._graphics.addImageObject(imageData).then(() => {
+            console.log('Image loaded via addImageObject');
+            imageLoaded = true;
+
+            this.ensureCanvasSelectable();
+            console.log('Canvas objects after addImageObject:', this.editor._graphics.getCanvas().getObjects().length);
+          }).catch((e: any) => {
+            console.log('addImageObject failed:', e);
+          });
+        } catch (e) {
+          console.log('addImageObject error:', e);
+        }
+      }
+
+      if (!imageLoaded && this.editor.loadImageFromURL) {
+        console.log('Falling back to loadImageFromURL (background)');
+        try {
           const result = this.editor.loadImageFromURL(imageData);
           if (result instanceof Promise) {
-            result
-              .then(() => {
-                console.log('Image loaded successfully via loadImageFromURL (Promise)');
-                imageLoaded = true;
-              })
-              .catch((e) => {
-                console.log('loadImageFromURL Promise failed:', e);
-              });
+            result.then(() => {
+              console.log('Image loaded as background via loadImageFromURL');
+              imageLoaded = true;
+            }).catch((e: any) => {
+              console.log('loadImageFromURL Promise failed:', e);
+            });
           } else {
-            console.log('Image loaded successfully via loadImageFromURL');
+            console.log('Image loaded as background via loadImageFromURL');
             imageLoaded = true;
           }
         } catch (e) {
           console.log('loadImageFromURL failed:', e);
         }
-      }
-
-      // Approach 2: Canvas add method (most direct)
-      if (!imageLoaded && canvas.add) {
-        console.log('Approach 2: Using canvas.add method');
-        try {
-          // Calculate proper scale to fit the canvas
-          const scaleX = canvas.width / img.width;
-          const scaleY = canvas.height / img.height;
-          const scale = Math.min(scaleX, scaleY);
-
-          const fabricImg = new (window as any).fabric.Image(img, {
-            left: (canvas.width - img.width * scale) / 2,
-            top: (canvas.height - img.height * scale) / 2,
-            selectable: true,
-            hasControls: true,
-            hasBorders: true,
-            scaleX: scale,
-            scaleY: scale,
-          });
-
-          console.log(
-            'Creating fabric.Image with scale:',
-            scale,
-            'position:',
-            fabricImg.left,
-            fabricImg.top
-          );
-
-          // Clear existing objects first
-          canvas.clear();
-          canvas.add(fabricImg);
-          canvas.setActiveObject(fabricImg);
-
-          // Force multiple renders
-          canvas.renderAll();
-          setTimeout(() => canvas.renderAll(), 100);
-          setTimeout(() => canvas.renderAll(), 500);
-
-          imageLoaded = true;
-          console.log('Image loaded successfully via canvas.add');
-          console.log('Canvas objects after add:', canvas._objects.length);
-        } catch (e) {
-          console.log('canvas.add failed:', e);
-        }
-      }
-
-      // Approach 2: addImageObject as fallback
-      if (!imageLoaded && this.editor._graphics?.addImageObject) {
-        console.log('Approach 2: Using addImageObject method');
-        try {
-          this.editor._graphics.addImageObject(imageData, {
-            left: 0,
-            top: 0,
-          });
-          imageLoaded = true;
-          console.log('Image loaded successfully via addImageObject');
-        } catch (e) {
-          console.log('addImageObject failed:', e);
-        }
-      }
-
-      // Approach 3: loadImageFromURL as fallback
-      if (!imageLoaded && this.editor.loadImageFromURL) {
-        console.log('Approach 3: Using loadImageFromURL method');
-        try {
-          // Try various parameter formats
-          const formats = [
-            imageData, // Format 1: Direct URL string
-            { url: imageData }, // Format 2: Object with url property
-            { imageUrl: imageData }, // Format 3: Object with imageUrl property
-            { src: imageData }, // Format 4: Object with src property
-          ];
-
-          for (let i = 0; i < formats.length && !imageLoaded; i++) {
-            try {
-              console.log(`Trying format ${i + 1}:`, formats[i]);
-              this.editor.loadImageFromURL(formats[i]);
-              imageLoaded = true;
-              console.log('Image loaded successfully via loadImageFromURL');
-            } catch (e) {
-              console.log(`Format ${i + 1} failed:`);
-            }
-          }
-        } catch (e) {
-          console.log('loadImageFromURL failed:', e);
-        }
-      }
-
-      // Approach 4: imageController
-      if (!imageLoaded && this.editor._imageController) {
-        console.log('Approach 4: Using imageController');
-        try {
-          this.editor._imageController.loadImageFromFile(img);
-          imageLoaded = true;
-          console.log('Image loaded successfully via imageController');
-        } catch (e) {
-          console.log('imageController failed:', e);
-        }
-      }
-
-      if (!imageLoaded) {
-        console.error('Failed to load image using all available approaches');
-        this.error.emit(new Error('Failed to load generated image into editor'));
       }
     };
 
