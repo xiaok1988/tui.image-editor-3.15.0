@@ -361,7 +361,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
       reader.onload = (e) => {
         const imageData = e.target?.result as string;
         if (imageData) {
-          this.loadImageAsObject(imageData, false).then(resolve).catch(reject);
+          this.editor.addImageObject(imageData).then(resolve).catch(reject);
         } else {
           reject(new Error('Failed to read file'));
         }
@@ -777,7 +777,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
 
     console.log('Loading AI-generated image into editor...');
 
-    this.loadImageAsObject(imageData, false)
+    this.editor.addImageObject(imageData)
       .then(() => {
         console.log('AI image loaded successfully');
       })
