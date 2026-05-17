@@ -99,9 +99,9 @@ export class AiImageGenerationService {
       supportedFeatures: ['negativePrompt', 'numImages'],
     },
     {
-      id: 'qwen',
-      name: 'Qwen-Image-Edit',
-      description: 'Stability AI SD 2.1 — reliable text-to-image via Hugging Face',
+      id: 'sd14',
+      name: 'Stable Diffusion 1.4 Large',
+      description: 'Stability AI SD 1.4 Large — reliable text-to-image via Hugging Face',
       maxWidth: 768,
       maxHeight: 768,
       creditCost: 1,
