@@ -171,6 +171,11 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
     } else {
       submenuElement?.classList.remove('modal-open');
       this.removeBackdrop();
+      
+      // Also clear TUI's internal submenu state to prevent conflicts
+      if (this.editor?.ui) {
+        this.editor.ui.submenu = null;
+      }
     }
   }
 
@@ -218,7 +223,10 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
   }
 
   private closeMobileSubmenu(): void {
-    this.setSubmenu('', false);
+    // Directly clear submenu state without calling setSubmenu
+    // This avoids interfering with TUI's internal menu state
+    this.currentSubmenu = null;
+    this.updateSubmenuModalState();
   }
 
   private interceptTuiMenuChange(): void {
