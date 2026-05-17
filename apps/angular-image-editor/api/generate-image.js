@@ -2,9 +2,8 @@ const https = require('https');
 
 // Supported models on Hugging Face Inference API
 const MODELS = {
-  sd35: 'stabilityai/stable-diffusion-3.5-large',
-  flux: 'black-forest-labs/FLUX.1-schnell',
-  sd14: 'CompVis/stable-diffusion-v1-4',
+  sd3medium: 'stabilityai/stable-diffusion-3-medium-diffusers',
+  flux: 'black-forest-labs/FLUX.1-schnell'
 };
 
 function hfRequest(modelId, apiToken, body) {

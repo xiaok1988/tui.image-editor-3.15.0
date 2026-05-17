@@ -90,23 +90,14 @@ export class AiImageGenerationService {
       supportedFeatures: ['negativePrompt', 'numImages'],
     },
     {
-      id: 'sd35',
-      name: 'Stable Diffusion 3.5 Large',
-      description: 'Stability AI SD 3.5 Large — quality text-to-image generation via Hugging Face', 
+      id: 'sd3medium',
+      name: 'Stable Diffusion 3 Medium',
+      description: 'Stability AI SD 3 Medium — quality text-to-image generation via Hugging Face',  
       maxWidth: 1024,
       maxHeight: 1024,
       creditCost: 1,
       supportedFeatures: ['negativePrompt', 'numImages'],
-    },
-    {
-      id: 'sd14',
-      name: 'Stable Diffusion 1.4 Large',
-      description: 'Stability AI SD 1.4 Large — reliable text-to-image via Hugging Face',
-      maxWidth: 768,
-      maxHeight: 768,
-      creditCost: 1,
-      supportedFeatures: ['negativePrompt', 'numImages'],
-    },
+    }
   ];
 
   getSupportedModels(): AiModel[] {
