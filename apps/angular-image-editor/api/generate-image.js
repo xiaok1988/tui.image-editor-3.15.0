@@ -2,9 +2,9 @@ const https = require('https');
 
 // Supported models on Hugging Face Inference API
 const MODELS = {
-  qwen: 'fal-ai/qwen-image-2512',
+  sd35: 'stabilityai/stable-diffusion-3.5-large',
   flux: 'black-forest-labs/FLUX.1-schnell',
-  baidu: 'fal-ai/ernie-image',
+  sd14: 'CompVis/stable-diffusion-v1-4',
 };
 
 function hfRequest(modelId, apiToken, body) {

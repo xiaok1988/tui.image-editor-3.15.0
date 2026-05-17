@@ -90,9 +90,9 @@ export class AiImageGenerationService {
       supportedFeatures: ['negativePrompt', 'numImages'],
     },
     {
-      id: 'baidu',
-      name: 'baidu ERNIE-Image',
-      description: 'Baidu ERNIE Image — quality text-to-image generation via Hugging Face', 
+      id: 'sd35',
+      name: 'Stable Diffusion 3.5 Large',
+      description: 'Stability AI SD 3.5 Large — quality text-to-image generation via Hugging Face', 
       maxWidth: 1024,
       maxHeight: 1024,
       creditCost: 1,
