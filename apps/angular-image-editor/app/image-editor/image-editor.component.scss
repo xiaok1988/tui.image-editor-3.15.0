@@ -305,7 +305,7 @@
 
 .ai-toggle-btn {
   position: absolute;
-  top: 60px;
+  top: 450px;
   right: 10px;
   z-index: 1100 !important;
   padding: 10px 20px;
@@ -364,7 +364,7 @@
 @media (max-width: 768px) {
   .ai-toggle-btn {
     right: 10px;
-    top: 100px;
+    top: 450px;
     padding: 8px 16px;
     font-size: 12px;
   }
