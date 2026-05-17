@@ -250,14 +250,20 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
     const deleteAllBtn = this.editor.ui._buttonElements?.['deleteAll'];
 
     if (zoomInBtn) {
-      zoomInBtn.addEventListener('click', (e: Event) => {
+      const newZoomInBtn = zoomInBtn.cloneNode(true) as HTMLElement;
+      zoomInBtn.parentNode?.replaceChild(newZoomInBtn, zoomInBtn);
+      this.editor.ui._buttonElements['zoomIn'] = newZoomInBtn;
+      newZoomInBtn.addEventListener('click', (e: Event) => {
         e.preventDefault();
         this.zoomIn();
       });
     }
 
     if (zoomOutBtn) {
-      zoomOutBtn.addEventListener('click', (e: Event) => {
+      const newZoomOutBtn = zoomOutBtn.cloneNode(true) as HTMLElement;
+      zoomOutBtn.parentNode?.replaceChild(newZoomOutBtn, zoomOutBtn);
+      this.editor.ui._buttonElements['zoomOut'] = newZoomOutBtn;
+      newZoomOutBtn.addEventListener('click', (e: Event) => {
         e.preventDefault();
         this.zoomOut();
       });
@@ -281,34 +287,127 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
     }
   }
 
-  zoomIn(): void {
-    const canvas = this.editor._graphics?.getCanvas();
-    if (canvas) {
-      const currentZoom = canvas.getZoom();
-      const newZoom = Math.min(currentZoom * 1.2, 10);
-      canvas.setZoom(newZoom);
-      this.scaleContainer(newZoom);
-      canvas.renderAll();
-    }
+zoomIn(): void {
+    const currentZoom = this.currentZoom || 1;
+    const newZoom = Math.min(currentZoom * 1.2, 10);
+    this.applyPhysicalZoom(newZoom);
   }
 
   zoomOut(): void {
-    const canvas = this.editor._graphics?.getCanvas();
-    if (canvas) {
-      const currentZoom = canvas.getZoom();
-      const newZoom = Math.max(currentZoom / 1.2, 0.1);
-      canvas.setZoom(newZoom);
-      this.scaleContainer(newZoom);
-      canvas.renderAll();
-    }
+    const currentZoom = this.currentZoom || 1;
+    const newZoom = Math.max(currentZoom / 1.2, 0.1);
+    this.applyPhysicalZoom(newZoom);
   }
 
-  private scaleContainer(zoom: number): void {
-    const wrapper = this.editorContainer?.nativeElement.querySelector('.tui-image-editor-canvas-container') as HTMLElement;
-    if (wrapper) {
-      wrapper.style.width = `${100 * zoom}%`;
-      wrapper.style.height = `${100 * zoom}%`;
+  private currentZoom = 1;
+  private baseCanvasWidth = 0;
+  private baseCanvasHeight = 0;
+
+  /**
+   * Physical zoom via pure DOM manipulation.
+   * Stores original canvas size on first call, then scales everything proportionally.
+   * Does NOT touch Fabric.js APIs to avoid conflicting with TUI's internal state.
+   */
+  private applyPhysicalZoom(zoom: number): void {
+    if (!this.baseCanvasWidth) {
+      const canvasEl = this.editorContainer?.nativeElement.querySelector('.tui-image-editor-canvas-container canvas') as HTMLCanvasElement;
+      if (canvasEl) {
+        this.baseCanvasWidth = canvasEl.width;
+        this.baseCanvasHeight = canvasEl.height;
+      } else {
+        return;
+      }
     }
+
+    const newW = Math.round(this.baseCanvasWidth * zoom);
+    const newH = Math.round(this.baseCanvasHeight * zoom);
+
+    const canvasEls = this.editorContainer?.nativeElement.querySelectorAll('.tui-image-editor-canvas-container canvas') as NodeListOf<HTMLCanvasElement>;
+    canvasEls?.forEach((el) => {
+      el.width = newW;
+      el.height = newH;
+      el.style.cssText = `width: ${newW}px !important; height: ${newH}px !important; max-width: ${newW}px !important; max-height: ${newH}px !important;`;
+    });
+
+    const wrappers = [
+      this.editorContainer?.nativeElement.querySelector('.tui-image-editor-canvas-container'),
+      this.editorContainer?.nativeElement.querySelector('.tui-image-editor-canvas-wrap'),
+    ];
+    wrappers.forEach((el) => {
+      if (el) {
+        (el as HTMLElement).style.cssText = `width: ${newW}px !important; height: ${newH}px !important; max-width: none !important; max-height: none !important;`;
+      }
+    });
+
+    const tuiEditorContainer = this.editorContainer?.nativeElement.querySelector('.tui-image-editor') as HTMLElement;
+    if (tuiEditorContainer) {
+      tuiEditorContainer.style.cssText = `width: ${newW}px !important; height: ${newH}px !important; max-width: none !important; max-height: none !important;`;
+    }
+
+    const fabricCanvas = this.editor._graphics?.getCanvas();
+    if (fabricCanvas) {
+      fabricCanvas.setWidth(newW);
+      fabricCanvas.setHeight(newH);
+      
+      // Scale selectable objects
+      fabricCanvas.forEachObject((obj: any) => {
+        obj.scaleX = zoom;
+        obj.scaleY = zoom;
+        obj.setCoords();
+      });
+      
+      // Scale background image (main canvas image)
+      const bgImage = this.editor._graphics?.getCanvasImage();
+      if (bgImage) {
+        bgImage.scaleX = zoom;
+        bgImage.scaleY = zoom;
+        bgImage.setCoords();
+      }
+      
+      fabricCanvas.renderAll();
+    }
+
+    requestAnimationFrame(() => {
+      const delayedCanvasEls = this.editorContainer?.nativeElement.querySelectorAll('.tui-image-editor-canvas-container canvas') as NodeListOf<HTMLCanvasElement>;
+      delayedCanvasEls?.forEach((el) => {
+        el.style.cssText = `width: ${newW}px !important; height: ${newH}px !important; max-width: ${newW}px !important; max-height: ${newH}px !important;`;
+      });
+      const delayedWrappers = [
+        this.editorContainer?.nativeElement.querySelector('.tui-image-editor-canvas-container'),
+        this.editorContainer?.nativeElement.querySelector('.tui-image-editor-canvas-wrap'),
+      ];
+      delayedWrappers.forEach((el) => {
+        if (el) {
+          (el as HTMLElement).style.cssText = `width: ${newW}px !important; height: ${newH}px !important; max-width: none !important; max-height: none !important;`;
+        }
+      });
+      const delayedTuiEditorContainer = this.editorContainer?.nativeElement.querySelector('.tui-image-editor') as HTMLElement;
+      if (delayedTuiEditorContainer) {
+        delayedTuiEditorContainer.style.cssText = `width: ${newW}px !important; height: ${newH}px !important; max-width: none !important; max-height: none !important;`;
+      }
+      
+      const delayedFabricCanvas = this.editor._graphics?.getCanvas();
+      if (delayedFabricCanvas) {
+        // Scale selectable objects
+        delayedFabricCanvas.forEachObject((obj: any) => {
+          obj.scaleX = zoom;
+          obj.scaleY = zoom;
+          obj.setCoords();
+        });
+        
+        // Scale background image (main canvas image)
+        const delayedBgImage = this.editor._graphics?.getCanvasImage();
+        if (delayedBgImage) {
+          delayedBgImage.scaleX = zoom;
+          delayedBgImage.scaleY = zoom;
+          delayedBgImage.setCoords();
+        }
+        
+        delayedFabricCanvas.renderAll();
+      }
+    });
+
+    this.currentZoom = zoom;
   }
 
   private setupEventListeners(): void {
@@ -376,6 +475,16 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
           height: `${height}px`,
         },
       });
+
+      const canvasContainer = this.editorContainer.nativeElement.querySelector('.tui-image-editor-canvas-container') as HTMLElement;
+      if (canvasContainer) {
+        canvasContainer.style.cssText = `max-width: none !important; max-height: none !important;`;
+      }
+
+      const canvasWrap = this.editorContainer.nativeElement.querySelector('.tui-image-editor-canvas-wrap') as HTMLElement;
+      if (canvasWrap) {
+        canvasWrap.style.cssText = `max-width: none !important; max-height: none !important;`;
+      }
     }
   }
 
@@ -401,12 +510,10 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
     let promise: Promise<unknown>;
     
     if (!canvasImage) {
-      // First image - load as background and then convert to selectable object
-      promise = this.editor.loadImageFromURL(imageData, 'uploaded-image').then((sizeInfo: unknown) => {
-        // After loading as background, add it as a selectable object too
-        return this.editor.addImageObject(imageData).then(() => sizeInfo);
-      });
+      // First image - load as background (filter applies to background image)
+      promise = this.editor.loadImageFromURL(imageData, 'uploaded-image');
     } else {
+      // Subsequent images - add as selectable objects
       promise = this.editor.addImageObject(imageData);
     }
     
@@ -417,6 +524,8 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
         // Hide any active submenu first to ensure selection is enabled
         this.hideAllSubmenus();
         this.ensureCanvasSelectable();
+        // Call resizeToWindow to ensure canvas size is correct after loading
+        this.resizeToWindow();
       }, 100);
       return result;
     });
@@ -872,6 +981,10 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
     this.loadImageToEditor(imageData)
       .then(() => {
         console.log('AI image loaded successfully');
+        // Ensure canvas size fits within container after loading
+        setTimeout(() => {
+          this.resizeToWindow();
+        }, 300);
       })
       .catch((e: any) => {
         console.error('Failed to load AI image:', e);

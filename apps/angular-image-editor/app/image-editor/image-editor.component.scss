@@ -8,6 +8,18 @@
 :host ::ng-deep .tui-image-editor-canvas-container {
   overflow: visible !important;
   pointer-events: auto !important;
+  max-width: none !important;
+  max-height: none !important;
+}
+
+:host ::ng-deep .tui-image-editor-canvas-wrap {
+  max-width: none !important;
+  max-height: none !important;
+}
+
+:host ::ng-deep .tui-image-editor-main {
+  max-width: none !important;
+  max-height: none !important;
 }
 
 :host ::ng-deep .tui-image-editor-canvas-container canvas {
