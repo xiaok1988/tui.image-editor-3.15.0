@@ -66,15 +66,24 @@
   padding: 0 !important;
   margin: 0 !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  pointer-events: auto !important;
 }
 
 :host ::ng-deep .tui-image-editor-help-menu.right ul {
   margin: 0 !important;
   padding: 0 !important;
   list-style: none !important;
+  pointer-events: auto !important;
 }
 
-/* Modal backdrop for mobile */
+:host ::ng-deep .tui-image-editor-help-menu.right li,
+:host ::ng-deep .tui-image-editor-help-menu.right .tui-image-editor-item,
+:host ::ng-deep .tui-image-editor-help-menu.right button {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+/* Modal backdrop for all screen sizes */
 :host ::ng-deep .tui-image-editor-submenu-backdrop {
   display: block !important;
   position: fixed !important;
@@ -87,14 +96,13 @@
 }
 
 /* Add close button style for mobile submenu */
-:host ::ng-deep .tui-image-editor-submenu::before {
-  content: '✕' !important;
+:host ::ng-deep .tui-image-editor-submenu-close {
   position: absolute !important;
   top: 10px !important;
   left: 10px !important;
   width: 30px !important;
   height: 30px !important;
-  display: flex !important;
+  display: none !important;
   align-items: center !important;
   justify-content: center !important;
   background: rgba(0, 0, 0, 0.1) !important;
@@ -103,13 +111,16 @@
   font-size: 16px !important;
   color: #666 !important;
   z-index: 1002 !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
+  border: none !important;
+  padding: 0 !important;
 }
 
-:host ::ng-deep .tui-image-editor-submenu.modal-open::before {
-  opacity: 1 !important;
-  pointer-events: auto !important;
+:host ::ng-deep .tui-image-editor-submenu.modal-open .tui-image-editor-submenu-close {
+  display: flex !important;
+}
+
+:host ::ng-deep .tui-image-editor-submenu.tui-image-editor-submenu-hidden {
+  display: none !important;
 }
 
 /* Toolbar collapses on mobile */
@@ -123,12 +134,30 @@
 }
 
 /* Small devices (landscape phones, 640px and up) */
+@media (max-width: 640px) {
+  :host ::ng-deep .tui-image-editor-submenu {
+    transform: translateX(0);
+    width: 280px !important;
+    right: 0 !important;
+    top: 102px !important;
+  }
+
+  :host ::ng-deep .tui-image-editor-main {
+    margin-right: 280px !important;
+  }
+
+  :host ::ng-deep .tui-image-editor-submenu-backdrop {
+    display: none !important;
+  }
+}
+
 @media (min-width: 640px) {
   :host ::ng-deep .tui-image-editor-submenu {
     transform: translateX(0);
     width: 280px !important;
     right: 0 !important;
     top: 56px !important;
+    left: calc(100% - 350px)
   }
 
   :host ::ng-deep .tui-image-editor-main {
@@ -144,12 +173,16 @@
 @media (min-width: 768px) {
   :host ::ng-deep .tui-image-editor-submenu {
     width: 300px !important;
-    top: 56px !important;
-    right: 60px !important;
+    top: 102px !important;
+    right: 0px !important;
   }
 
   :host ::ng-deep .tui-image-editor-main {
     margin-right: 300px !important;
+  }
+
+  :host ::ng-deep .tui-image-editor-menu {
+    justify-content: flex-end !important;
   }
 }
 
@@ -157,8 +190,8 @@
 @media (min-width: 1024px) {
   :host ::ng-deep .tui-image-editor-submenu {
     width: 320px !important;
-    top: 56px !important;
-    right: 0 !important;
+    top: 102px !important;
+    right: 60px !important;
   }
 
   :host ::ng-deep .tui-image-editor-main {
@@ -179,54 +212,27 @@
   }
 }
 
-/* Submenu visibility control - override the default editor styles */
-/* Hide all submenu sections except the style section */
+/* Submenu visibility control - hide all menu contents by default */
+/* The modal-open class only controls the positioning, content visibility is controlled here */
+
 :host ::ng-deep .tui-image-editor-submenu > div:not(.tui-image-editor-submenu-style) {
   display: none !important;
 }
 
-/* Show specific submenu when its menu is active */
-:host
-  ::ng-deep
-  .tui-image-editor-main.tui-image-editor-menu-crop
-  .tui-image-editor-submenu
-  .tui-image-editor-menu-crop,
-:host
-  ::ng-deep
-  .tui-image-editor-main.tui-image-editor-menu-flip
-  .tui-image-editor-submenu
-  .tui-image-editor-menu-flip,
-:host
-  ::ng-deep
-  .tui-image-editor-main.tui-image-editor-menu-rotate
-  .tui-image-editor-submenu
-  .tui-image-editor-menu-rotate,
-:host
-  ::ng-deep
-  .tui-image-editor-main.tui-image-editor-menu-draw
-  .tui-image-editor-submenu
-  .tui-image-editor-menu-draw,
-:host
-  ::ng-deep
-  .tui-image-editor-main.tui-image-editor-menu-shape
-  .tui-image-editor-submenu
-  .tui-image-editor-menu-shape,
-:host
-  ::ng-deep
-  .tui-image-editor-main.tui-image-editor-menu-icon
-  .tui-image-editor-submenu
-  .tui-image-editor-menu-icon,
-:host
-  ::ng-deep
-  .tui-image-editor-main.tui-image-editor-menu-text
-  .tui-image-editor-submenu
-  .tui-image-editor-menu-text,
-:host
-  ::ng-deep
-  .tui-image-editor-main.tui-image-editor-menu-filter
-  .tui-image-editor-submenu
-  .tui-image-editor-menu-filter {
-  display: flex !important;
+/* Show menu content when modal-open is present AND main has the corresponding menu class */
+/* Note: .tui-image-editor-submenu is a CHILD of .tui-image-editor-main, not a sibling */
+:host ::ng-deep .tui-image-editor-main.tui-image-editor-menu-crop .tui-image-editor-submenu.modal-open > div.tui-image-editor-menu-crop,
+:host ::ng-deep .tui-image-editor-main.tui-image-editor-menu-flip .tui-image-editor-submenu.modal-open > div.tui-image-editor-menu-flip,
+:host ::ng-deep .tui-image-editor-main.tui-image-editor-menu-rotate .tui-image-editor-submenu.modal-open > div.tui-image-editor-menu-rotate,
+:host ::ng-deep .tui-image-editor-main.tui-image-editor-menu-draw .tui-image-editor-submenu.modal-open > div.tui-image-editor-menu-draw,
+:host ::ng-deep .tui-image-editor-main.tui-image-editor-menu-shape .tui-image-editor-submenu.modal-open > div.tui-image-editor-menu-shape,
+:host ::ng-deep .tui-image-editor-main.tui-image-editor-menu-icon .tui-image-editor-submenu.modal-open > div.tui-image-editor-menu-icon,
+:host ::ng-deep .tui-image-editor-main.tui-image-editor-menu-text .tui-image-editor-submenu.modal-open > div.tui-image-editor-menu-text,
+:host ::ng-deep .tui-image-editor-main.tui-image-editor-menu-filter .tui-image-editor-submenu.modal-open > div.tui-image-editor-menu-filter,
+:host ::ng-deep .tui-image-editor-main.tui-image-editor-menu-resize .tui-image-editor-submenu.modal-open > div.tui-image-editor-menu-resize,
+:host ::ng-deep .tui-image-editor-main.tui-image-editor-menu-mask .tui-image-editor-submenu.modal-open > div.tui-image-editor-menu-mask,
+:host ::ng-deep .tui-image-editor-main.tui-image-editor-menu-zoom .tui-image-editor-submenu.modal-open > div.tui-image-editor-menu-zoom {
+  display: table-cell !important;
 }
 
 /* Adjust editor content to leave space for submenu - desktop only */

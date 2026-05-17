@@ -106,6 +106,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
   private resizeObserver: ResizeObserver | null = null;
   private viewportWidth = 0;
   private menuObserver: MutationObserver | null = null;
+  private controlsObserver: MutationObserver | null = null;
 
   // AI Panel state
   showAiPanel = false;
@@ -139,6 +140,10 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
       this.menuObserver.disconnect();
       this.menuObserver = null;
     }
+    if (this.controlsObserver) {
+      this.controlsObserver.disconnect();
+      this.controlsObserver = null;
+    }
     window.removeEventListener('resize', this.handleResize);
   }
 
@@ -161,7 +166,9 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
       '.tui-image-editor-submenu-backdrop'
     );
 
-    if (this.isMobile && this.currentSubmenu) {
+    if (this.currentSubmenu) {
+      // Remove hidden class first
+      submenuElement?.classList.remove('tui-image-editor-submenu-hidden');
       submenuElement?.classList.add('modal-open');
       if (!backdropElement) {
         this.createBackdrop();
@@ -170,9 +177,10 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
       this.addCloseButtonHandler();
     } else {
       submenuElement?.classList.remove('modal-open');
+      submenuElement?.classList.add('tui-image-editor-submenu-hidden');
       this.removeBackdrop();
-      
-      // Also clear TUI's internal submenu state to prevent conflicts
+
+      // Clear TUI's internal submenu state
       if (this.editor?.ui) {
         this.editor.ui.submenu = null;
       }
@@ -183,26 +191,28 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
     const submenuElement = this.editorContainer.nativeElement.querySelector(
       '.tui-image-editor-submenu'
     ) as HTMLElement;
-    
+
     if (submenuElement && !submenuElement.dataset['closeHandlerAdded']) {
       submenuElement.dataset['closeHandlerAdded'] = 'true';
-      
-      submenuElement.addEventListener('click', (e: MouseEvent) => {
-        const target = e.target as HTMLElement;
-        // Check if clicked on the pseudo-element area (top-left corner)
-        if (target === submenuElement || target.parentElement === submenuElement) {
-          const rect = submenuElement.getBoundingClientRect();
-          const x = e.clientX - rect.left;
-          const y = e.clientY - rect.top;
-          
-          // If click is in the top-left area where the close button is
-          if (x < 50 && y < 50) {
-            e.preventDefault();
-            e.stopPropagation();
-            this.closeMobileSubmenu();
-          }
-        }
-      }, true);
+
+      // Create and add close button if not exists
+      let closeBtn = submenuElement.querySelector('.tui-image-editor-submenu-close') as HTMLElement;
+      if (!closeBtn) {
+        closeBtn = document.createElement('button');
+        closeBtn.className = 'tui-image-editor-submenu-close';
+        closeBtn.innerHTML = '✕';
+        closeBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.closeMobileSubmenu();
+        });
+        submenuElement.insertBefore(closeBtn, submenuElement.firstChild);
+      } else {
+        // Update existing button click handler
+        closeBtn.onclick = (e) => {
+          e.stopPropagation();
+          this.closeMobileSubmenu();
+        };
+      }
     }
   }
 
@@ -219,64 +229,103 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
     );
     if (backdrop) {
       backdrop.remove();
+      console.log('Backdrop removed');
     }
+    
+    // Also remove any other backdrops that might be lingering
+    const allBackdrops = this.editorContainer.nativeElement.querySelectorAll(
+      '.tui-image-editor-submenu-backdrop'
+    );
+    allBackdrops.forEach((bd: Element) => {
+      bd.remove();
+    });
   }
 
   private closeMobileSubmenu(): void {
-    // Directly clear submenu state without calling setSubmenu
-    // This avoids interfering with TUI's internal menu state
+    // Clear TUI's internal submenu state
+    if (this.editor?.ui) {
+      this.editor.ui.submenu = null;
+    }
+
+    // Clear our submenu state
     this.currentSubmenu = null;
-    this.updateSubmenuModalState();
+
+    // Hide submenu using CSS class
+    const submenuElement = this.editorContainer.nativeElement.querySelector(
+      '.tui-image-editor-submenu'
+    ) as HTMLElement;
+    if (submenuElement) {
+      submenuElement.classList.remove('modal-open');
+      submenuElement.classList.add('tui-image-editor-submenu-hidden');
+    }
+
+    // Remove backdrop
+    this.removeBackdrop();
   }
+
+  private menuInterceptorAdded = false;
 
   private interceptTuiMenuChange(): void {
     if (!this.editor?.ui) return;
 
+    // Only intercept once to avoid multiple wrappers
+    if (this.menuInterceptorAdded) return;
+    this.menuInterceptorAdded = true;
+
     // Store original changeMenu method
     const originalChangeMenu = this.editor.ui.changeMenu?.bind(this.editor.ui);
-    
+
     if (originalChangeMenu) {
       this.editor.ui.changeMenu = (menuName: string, toggle = true, discardSelection = true) => {
-        // On mobile, if clicking the same menu, toggle it off
-        if (this.isMobile && this.currentSubmenu === menuName && toggle) {
+        console.log('changeMenu called with:', menuName, 'toggle:', toggle);
+
+        // If clicking the same menu and toggle is enabled, close it
+        if (this.currentSubmenu === menuName && toggle) {
           this.currentSubmenu = null;
           this.updateSubmenuModalState();
           return;
         }
-        
+
+        // Call TUI's original method first to handle submenu switching
         originalChangeMenu(menuName, toggle, discardSelection);
-        
-        // Update our submenu state after TUI changes menu
-        setTimeout(() => {
-          this.currentSubmenu = this.editor.ui.submenu || null;
-          this.updateSubmenuModalState();
-        }, 100);
+
+        // Update our submenu state - use menuName directly since user clicked it
+        this.currentSubmenu = menuName;
+        console.log('Setting currentSubmenu to:', this.currentSubmenu);
+        this.updateSubmenuModalState();
       };
     }
 
-    // Monitor menu button clicks directly
-    const menuButtonContainer = this.editorContainer.nativeElement.querySelector('.tui-image-editor-menu');
-    if (menuButtonContainer) {
-      this.menuObserver = new MutationObserver(() => {
-        const activeButton = menuButtonContainer.querySelector('.active');
-        if (activeButton) {
-          const menuName = activeButton.getAttribute('data-menu') || '';
-          if (menuName && menuName !== this.currentSubmenu) {
-            this.currentSubmenu = menuName;
-            this.updateSubmenuModalState();
-          }
-        } else if (this.currentSubmenu) {
-          this.currentSubmenu = null;
+    // Monitor tui-image-editor-controls button clicks too
+    this.monitorControlsButtons();
+  }
+
+  private monitorControlsButtons(): void {
+    const controlsContainer = this.editorContainer.nativeElement.querySelector('.tui-image-editor-controls');
+    if (!controlsContainer) return;
+
+    // Use MutationObserver instead to watch for submenu changes
+    const observer = new MutationObserver(() => {
+      // Check if submenu state changed
+      setTimeout(() => {
+        const newSubmenu = this.editor?.ui?.submenu;
+        if (newSubmenu && newSubmenu !== this.currentSubmenu) {
+          console.log('Submenu changed via controls:', newSubmenu);
+          this.currentSubmenu = newSubmenu;
           this.updateSubmenuModalState();
         }
-      });
-      
-      this.menuObserver.observe(menuButtonContainer, { 
-        subtree: true, 
-        attributes: true, 
-        attributeFilter: ['class'] 
-      });
-    }
+      }, 50);
+    });
+    
+    observer.observe(controlsContainer, { 
+      subtree: true, 
+      attributes: true, 
+      childList: true,
+      attributeFilter: ['class', 'data-menu']
+    });
+    
+    // Store observer reference for cleanup
+    this.controlsObserver = observer;
   }
 
   private initEditor(): void {
@@ -524,6 +573,7 @@ zoomIn(): void {
     // Add a periodic check to ensure background image remains selectable
     setInterval(() => {
       this.ensureBackgroundImageSelectable();
+      this.ensureHelpMenuClickable();
     }, 500);
   }
   
@@ -663,6 +713,9 @@ zoomIn(): void {
         // Hide any active submenu first to ensure selection is enabled
         this.hideAllSubmenus();
         
+        // Re-ensure help menu is clickable after image load
+        this.ensureHelpMenuClickable();
+        
         // Make background image selectable and add to fabric object list
         const bgImage = this.editor._graphics?.getCanvasImage();
         const canvas = this.editor._graphics?.getCanvas();
@@ -710,6 +763,31 @@ zoomIn(): void {
       }, 100);
       return result;
     });
+  }
+
+  private ensureHelpMenuClickable(): void {
+    // Ensure help menu is clickable
+    const helpMenu = this.editorContainer.nativeElement.querySelector('.tui-image-editor-help-menu.right') as HTMLElement;
+    if (helpMenu) {
+      helpMenu.style.pointerEvents = 'auto';
+      helpMenu.style.zIndex = '1001';
+      
+      const buttons = helpMenu.querySelectorAll('button, .tui-image-editor-item');
+      buttons.forEach((btn: Element) => {
+        (btn as HTMLElement).style.pointerEvents = 'auto';
+        (btn as HTMLElement).style.cursor = 'pointer';
+      });
+    }
+    
+    // Also ensure controls buttons are clickable
+    const controlsContainer = this.editorContainer.nativeElement.querySelector('.tui-image-editor-controls');
+    if (controlsContainer) {
+      const controlButtons = controlsContainer.querySelectorAll('button, [data-menu]');
+      controlButtons.forEach((btn: Element) => {
+        (btn as HTMLElement).style.pointerEvents = 'auto';
+        (btn as HTMLElement).style.cursor = 'pointer';
+      });
+    }
   }
 
   private loadImageAsObject(imageData: string, fitToCanvas: boolean = true): Promise<unknown> {
@@ -972,7 +1050,10 @@ zoomIn(): void {
    * Hide all submenus
    */
   hideAllSubmenus(): void {
-    this.setSubmenu('', false);
+    // Directly clear submenu state without calling setSubmenu
+    // This avoids interfering with TUI's internal menu state
+    this.currentSubmenu = null;
+    this.updateSubmenuModalState();
   }
 
   /**
