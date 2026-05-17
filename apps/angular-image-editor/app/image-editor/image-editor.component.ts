@@ -105,6 +105,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
   private isMobile = false;
   private resizeObserver: ResizeObserver | null = null;
   private viewportWidth = 0;
+  private menuObserver: MutationObserver | null = null;
 
   // AI Panel state
   showAiPanel = false;
@@ -133,6 +134,10 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();
       this.resizeObserver = null;
+    }
+    if (this.menuObserver) {
+      this.menuObserver.disconnect();
+      this.menuObserver = null;
     }
     window.removeEventListener('resize', this.handleResize);
   }
@@ -187,6 +192,49 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
     this.setSubmenu('', false);
   }
 
+  private interceptTuiMenuChange(): void {
+    if (!this.editor?.ui) return;
+
+    // Store original changeMenu method
+    const originalChangeMenu = this.editor.ui.changeMenu?.bind(this.editor.ui);
+    
+    if (originalChangeMenu) {
+      this.editor.ui.changeMenu = (menuName: string, toggle = true, discardSelection = true) => {
+        originalChangeMenu(menuName, toggle, discardSelection);
+        
+        // Update our submenu state after TUI changes menu
+        setTimeout(() => {
+          this.currentSubmenu = this.editor.ui.submenu || null;
+          this.updateSubmenuModalState();
+        }, 100);
+      };
+    }
+
+    // Monitor menu button clicks directly
+    const menuButtonContainer = this.editorContainer.nativeElement.querySelector('.tui-image-editor-menu');
+    if (menuButtonContainer) {
+      this.menuObserver = new MutationObserver(() => {
+        const activeButton = menuButtonContainer.querySelector('.active');
+        if (activeButton) {
+          const menuName = activeButton.getAttribute('data-menu') || '';
+          if (menuName && menuName !== this.currentSubmenu) {
+            this.currentSubmenu = menuName;
+            this.updateSubmenuModalState();
+          }
+        } else if (this.currentSubmenu) {
+          this.currentSubmenu = null;
+          this.updateSubmenuModalState();
+        }
+      });
+      
+      this.menuObserver.observe(menuButtonContainer, { 
+        subtree: true, 
+        attributes: true, 
+        attributeFilter: ['class'] 
+      });
+    }
+  }
+
   private initEditor(): void {
     if (this.initialized) return;
 
@@ -231,6 +279,9 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
       // Initialize responsive features
       this.updateViewportSize();
       window.addEventListener('resize', this.handleResize);
+
+      // Intercept TUI's internal menu change to track submenu state
+      this.interceptTuiMenuChange();
 
       this.initialized = true;
     } catch (err) {

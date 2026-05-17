@@ -13,6 +13,26 @@
   }
 }
 
+.logo-container {
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+
+  @media (max-width: 640px) {
+    padding: 0 4px;
+  }
+}
+
+.logo-image {
+  height: 32px;
+  width: auto;
+  object-fit: contain;
+
+  @media (max-width: 640px) {
+    height: 24px;
+  }
+}
+
 .toolbar-section {
   display: flex;
   align-items: center;
