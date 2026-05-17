@@ -4,13 +4,11 @@ const https = require('https');
 const MODELS = {
   qwen: 'Qwen/Qwen-Image-2512',
   flux: 'black-forest-labs/FLUX.1-schnell',
-  sdxl: 'stabilityai/stable-diffusion-xl-base-1.0',
+  baidu: 'baidu/ERNIE-Image',
 };
 
 function hfRequest(modelId, apiToken, body) {
   return new Promise((resolve, reject) => {
-    console.log(MODELS);
-    console.log(modelId, '=====', MODELS[modelId])
     const url = `https://router.huggingface.co/hf-inference/models/${modelId}`;
     console.log('HF request URL:', url);
 

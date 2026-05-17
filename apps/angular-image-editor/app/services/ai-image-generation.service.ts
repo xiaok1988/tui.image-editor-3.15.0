@@ -90,9 +90,9 @@ export class AiImageGenerationService {
       supportedFeatures: ['negativePrompt', 'numImages'],
     },
     {
-      id: 'sdxl',
-      name: 'Stable Diffusion (SDXL)',
-      description: 'Stability AI SDXL 1.0 — quality text-to-image generation via Hugging Face',
+      id: 'baidu',
+      name: 'baidu ERNIE-Image',
+      description: 'Baidu ERNIE Image — quality text-to-image generation via Hugging Face', 
       maxWidth: 1024,
       maxHeight: 1024,
       creditCost: 1,
