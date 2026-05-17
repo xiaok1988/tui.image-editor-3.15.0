@@ -26,8 +26,8 @@ google image api does not work as expected. (they have banned the free tier in m
 
 This is the desktop version
 
-![](.\desktop-image-editor.png)
+![](desktop-image-editor.png)
 
 And this is the mobile version
 
-![](.\mobile-image-editor.png)
+![](mobile-image-editor.png)
