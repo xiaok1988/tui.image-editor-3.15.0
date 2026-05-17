@@ -95,6 +95,9 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
   @Output() submenuChanged = new EventEmitter<{ menuName: string | null }>();
   @Output() error = new EventEmitter<Error>();
 
+  // State
+  private backgroundImageDeleted = false;
+
   // Internal state
   private editor!: ImageEditorInstance;
   private initialized = false;
@@ -270,17 +273,72 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
     }
 
     if (deleteBtn) {
-      deleteBtn.addEventListener('click', (e: Event) => {
+      console.log('Setting up delete button - cloning');
+      
+      // Clone button to completely remove all original event listeners
+      const newDeleteBtn = deleteBtn.cloneNode(true) as HTMLElement;
+      deleteBtn.parentNode?.replaceChild(newDeleteBtn, deleteBtn);
+      this.editor.ui._buttonElements['delete'] = newDeleteBtn;
+      
+      // Add our own click handler
+      newDeleteBtn.addEventListener('click', (e: Event) => {
         e.preventDefault();
+        e.stopPropagation();
+        
+        console.log('Delete button clicked');
+        
         const activeObject = this.editor._graphics?.getActiveObject();
-        if (activeObject) {
-          this.deleteSelectedObject();
+        const bgImage = this.editor._graphics?.getCanvasImage();
+        const canvas = this.editor._graphics?.getCanvas();
+        
+        if (!activeObject || !canvas) {
+          console.log('No active object or canvas');
+          return;
+        }
+        
+        console.log('Active object:', activeObject, 'is background image:', bgImage && activeObject === bgImage);
+        console.log('Objects count before:', canvas.getObjects().length);
+        console.log('canvasImage before:', this.editor._graphics?.canvasImage);
+        
+        // Always use direct fabric remove - bypass tui-image-editor completely!
+        try {
+          // First, remove it from fabric canvas
+          canvas.remove(activeObject);
+          
+          // Also try to remove from canvas.backgroundImage if it exists
+          if (canvas.backgroundImage === activeObject) {
+            console.log('Also removing from canvas.backgroundImage');
+            canvas.backgroundImage = null;
+          }
+          
+          // If it was the background image, also clear canvasImage
+          if (bgImage && activeObject === bgImage) {
+            console.log('It was background image');
+            this.backgroundImageDeleted = true;
+            this.editor._graphics.canvasImage = null;
+          }
+          
+          // Render canvas
+          canvas.renderAll();
+          
+          console.log('Objects count after:', canvas.getObjects().length);
+          console.log('canvasImage after:', this.editor._graphics?.canvasImage);
+          console.log('Object deleted successfully');
+        } catch (err) {
+          console.error('Error deleting object:', err);
         }
       });
+      
+      console.log('Delete button setup complete');
     }
 
     if (deleteAllBtn) {
-      deleteAllBtn.addEventListener('click', (e: Event) => {
+      // Clone button to remove all existing event listeners
+      const newDeleteAllBtn = deleteAllBtn.cloneNode(true) as HTMLElement;
+      deleteAllBtn.parentNode?.replaceChild(newDeleteAllBtn, deleteAllBtn);
+      this.editor.ui._buttonElements['deleteAll'] = newDeleteAllBtn;
+      
+      newDeleteAllBtn.addEventListener('click', (e: Event) => {
         e.preventDefault();
         this.clearAll();
       });
@@ -309,103 +367,24 @@ zoomIn(): void {
    * Does NOT touch Fabric.js APIs to avoid conflicting with TUI's internal state.
    */
   private applyPhysicalZoom(zoom: number): void {
-    if (!this.baseCanvasWidth) {
-      const canvasEl = this.editorContainer?.nativeElement.querySelector('.tui-image-editor-canvas-container canvas') as HTMLCanvasElement;
-      if (canvasEl) {
-        this.baseCanvasWidth = canvasEl.width;
-        this.baseCanvasHeight = canvasEl.height;
-      } else {
-        return;
-      }
+    const canvas = this.editor._graphics?.getCanvas();
+    
+    if (!canvas) {
+      console.warn('Zoom: Canvas not found');
+      return;
     }
 
-    const newW = Math.round(this.baseCanvasWidth * zoom);
-    const newH = Math.round(this.baseCanvasHeight * zoom);
+    // Use Fabric.js zoom API directly
+    const center = canvas.getCenter();
+    canvas.zoomToPoint(new (window as any).fabric.Point(center.left, center.top), zoom);
+    canvas.renderAll();
 
-    const canvasEls = this.editorContainer?.nativeElement.querySelectorAll('.tui-image-editor-canvas-container canvas') as NodeListOf<HTMLCanvasElement>;
-    canvasEls?.forEach((el) => {
-      el.width = newW;
-      el.height = newH;
-      el.style.cssText = `width: ${newW}px !important; height: ${newH}px !important; max-width: ${newW}px !important; max-height: ${newH}px !important;`;
-    });
-
-    const wrappers = [
-      this.editorContainer?.nativeElement.querySelector('.tui-image-editor-canvas-container'),
-      this.editorContainer?.nativeElement.querySelector('.tui-image-editor-canvas-wrap'),
-    ];
-    wrappers.forEach((el) => {
-      if (el) {
-        (el as HTMLElement).style.cssText = `width: ${newW}px !important; height: ${newH}px !important; max-width: none !important; max-height: none !important;`;
-      }
-    });
-
-    const tuiEditorContainer = this.editorContainer?.nativeElement.querySelector('.tui-image-editor') as HTMLElement;
-    if (tuiEditorContainer) {
-      tuiEditorContainer.style.cssText = `width: ${newW}px !important; height: ${newH}px !important; max-width: none !important; max-height: none !important;`;
+    // Also apply CSS transform to the canvas element for visual scaling
+    const canvasElement = canvas.getElement();
+    if (canvasElement) {
+      canvasElement.style.transform = `scale(${zoom})`;
+      canvasElement.style.transformOrigin = 'center center';
     }
-
-    const fabricCanvas = this.editor._graphics?.getCanvas();
-    if (fabricCanvas) {
-      fabricCanvas.setWidth(newW);
-      fabricCanvas.setHeight(newH);
-      
-      // Scale selectable objects
-      fabricCanvas.forEachObject((obj: any) => {
-        obj.scaleX = zoom;
-        obj.scaleY = zoom;
-        obj.setCoords();
-      });
-      
-      // Scale background image (main canvas image)
-      const bgImage = this.editor._graphics?.getCanvasImage();
-      if (bgImage) {
-        bgImage.scaleX = zoom;
-        bgImage.scaleY = zoom;
-        bgImage.setCoords();
-      }
-      
-      fabricCanvas.renderAll();
-    }
-
-    requestAnimationFrame(() => {
-      const delayedCanvasEls = this.editorContainer?.nativeElement.querySelectorAll('.tui-image-editor-canvas-container canvas') as NodeListOf<HTMLCanvasElement>;
-      delayedCanvasEls?.forEach((el) => {
-        el.style.cssText = `width: ${newW}px !important; height: ${newH}px !important; max-width: ${newW}px !important; max-height: ${newH}px !important;`;
-      });
-      const delayedWrappers = [
-        this.editorContainer?.nativeElement.querySelector('.tui-image-editor-canvas-container'),
-        this.editorContainer?.nativeElement.querySelector('.tui-image-editor-canvas-wrap'),
-      ];
-      delayedWrappers.forEach((el) => {
-        if (el) {
-          (el as HTMLElement).style.cssText = `width: ${newW}px !important; height: ${newH}px !important; max-width: none !important; max-height: none !important;`;
-        }
-      });
-      const delayedTuiEditorContainer = this.editorContainer?.nativeElement.querySelector('.tui-image-editor') as HTMLElement;
-      if (delayedTuiEditorContainer) {
-        delayedTuiEditorContainer.style.cssText = `width: ${newW}px !important; height: ${newH}px !important; max-width: none !important; max-height: none !important;`;
-      }
-      
-      const delayedFabricCanvas = this.editor._graphics?.getCanvas();
-      if (delayedFabricCanvas) {
-        // Scale selectable objects
-        delayedFabricCanvas.forEachObject((obj: any) => {
-          obj.scaleX = zoom;
-          obj.scaleY = zoom;
-          obj.setCoords();
-        });
-        
-        // Scale background image (main canvas image)
-        const delayedBgImage = this.editor._graphics?.getCanvasImage();
-        if (delayedBgImage) {
-          delayedBgImage.scaleX = zoom;
-          delayedBgImage.scaleY = zoom;
-          delayedBgImage.setCoords();
-        }
-        
-        delayedFabricCanvas.renderAll();
-      }
-    });
 
     this.currentZoom = zoom;
   }
@@ -414,6 +393,8 @@ zoomIn(): void {
     this.editor.on('loadImage', (info: { width: number; height: number }) => {
       this.imageLoaded.emit(info);
       this.emitUndoRedoState();
+      // Ensure background image is selectable after loading
+      setTimeout(() => this.ensureCanvasSelectable(), 100);
     });
 
     this.editor.on('addObject', (obj: { id: number; type: string }) => {
@@ -436,6 +417,66 @@ zoomIn(): void {
 
     this.editor.on('undoStackChanged', () => this.emitUndoRedoState());
     this.editor.on('redoStackChanged', () => this.emitUndoRedoState());
+    
+    // Also check after undo/redo operations
+    this.editor.on('undo', () => {
+      setTimeout(() => this.ensureCanvasSelectable(), 100);
+    });
+    this.editor.on('redo', () => {
+      setTimeout(() => this.ensureCanvasSelectable(), 100);
+    });
+    
+    // Add a periodic check to ensure background image remains selectable
+    setInterval(() => {
+      this.ensureBackgroundImageSelectable();
+    }, 500);
+  }
+  
+  private ensureBackgroundImageSelectable(): void {
+    // If background image has been deleted, don't restore it
+    if (this.backgroundImageDeleted) {
+      return;
+    }
+    
+    const bgImage = this.editor._graphics?.getCanvasImage();
+    const canvas = this.editor._graphics?.getCanvas();
+    if (bgImage && canvas) {
+      // Check if background image is not selectable
+      if (!bgImage.selectable || !bgImage.evented || !bgImage.hasControls) {
+        console.log('Re-enabling background image selectability');
+        
+        // Set all selectable properties
+        bgImage.selectable = true;
+        bgImage.evented = true;
+        bgImage.hasControls = true;
+        bgImage.hasBorders = true;
+        bgImage.hoverCursor = 'move';
+        bgImage.moveCursor = 'move';
+        bgImage.lockMovementX = false;
+        bgImage.lockMovementY = false;
+        bgImage.lockRotation = false;
+        bgImage.lockScalingX = false;
+        bgImage.lockScalingY = false;
+        bgImage.lockUniScaling = false;
+        bgImage.excludeFromExport = false;
+        
+        // Ensure the background image is in the canvas object list
+        const objects = canvas.getObjects();
+        const bgImageInList = objects.some((obj: any) => obj === bgImage);
+        
+        if (!bgImageInList) {
+          console.log('Adding background image to canvas object list');
+          // Remove it first to avoid duplicates
+          canvas.remove(bgImage);
+          // Add it back to the canvas
+          canvas.add(bgImage);
+          // Make sure it's at the bottom
+          canvas.sendToBack(bgImage);
+        }
+        
+        canvas.renderAll();
+      }
+    }
   }
 
   private emitUndoRedoState(): void {
@@ -509,6 +550,9 @@ zoomIn(): void {
     const canvasImage = this.editor._graphics?.getCanvasImage();
     let promise: Promise<unknown>;
     
+    // Reset background image deleted flag when loading new image
+    this.backgroundImageDeleted = false;
+    
     if (!canvasImage) {
       // First image - load as background (filter applies to background image)
       promise = this.editor.loadImageFromURL(imageData, 'uploaded-image');
@@ -523,6 +567,48 @@ zoomIn(): void {
       setTimeout(() => {
         // Hide any active submenu first to ensure selection is enabled
         this.hideAllSubmenus();
+        
+        // Make background image selectable and add to fabric object list
+        const bgImage = this.editor._graphics?.getCanvasImage();
+        const canvas = this.editor._graphics?.getCanvas();
+        if (bgImage && canvas && !this.backgroundImageDeleted) {
+          // Set all selectable properties
+          bgImage.selectable = true;
+          bgImage.evented = true;
+          bgImage.hasControls = true;
+          bgImage.hasBorders = true;
+          bgImage.hoverCursor = 'move';
+          bgImage.moveCursor = 'move';
+          bgImage.lockMovementX = false;
+          bgImage.lockMovementY = false;
+          bgImage.lockRotation = false;
+          bgImage.lockScalingX = false;
+          bgImage.lockScalingY = false;
+          bgImage.lockUniScaling = false;
+          bgImage.excludeFromExport = false;
+          
+          // Add properties that tui-image-editor expects
+          bgImage.id = -999; // Use a special id for background image
+          if (!bgImage.type) {
+            bgImage.type = 'image';
+          }
+          if (!bgImage.group) {
+            bgImage.group = null;
+          }
+          
+          // Ensure the background image is in the canvas object list
+          const objects = canvas.getObjects();
+          const bgImageInList = objects.some((obj: any) => obj === bgImage);
+          
+          if (!bgImageInList) {
+            console.log('Adding background image to canvas object list on load');
+            // Add it to the canvas
+            canvas.add(bgImage);
+            // Make sure it's at the bottom
+            canvas.sendToBack(bgImage);
+          }
+        }
+        
         this.ensureCanvasSelectable();
         // Call resizeToWindow to ensure canvas size is correct after loading
         this.resizeToWindow();
@@ -629,7 +715,16 @@ zoomIn(): void {
 
   deleteSelectedObject(): void {
     const activeObject = this.editor._graphics?.getActiveObject();
-    if (activeObject) {
+    const bgImage = this.editor._graphics?.getCanvasImage();
+    
+    // Check if trying to delete background image
+    if (activeObject && bgImage && activeObject === bgImage) {
+      console.log('Preventing deletion of background image');
+      return; // Don't delete background image
+    }
+    
+    // Otherwise proceed with normal deletion
+    if (activeObject && activeObject.id) {
       this.editor.removeObject(activeObject.id);
     }
   }
@@ -896,6 +991,17 @@ zoomIn(): void {
       
       canvas.selection = true;
       canvas.defaultCursor = 'default';
+      
+      // Make background image selectable if it hasn't been deleted
+      const bgImage = this.editor._graphics?.getCanvasImage();
+      if (bgImage && !this.backgroundImageDeleted) {
+        console.log('Making background image selectable');
+        bgImage.selectable = true;
+        bgImage.evented = true;
+        bgImage.hasControls = true;
+        bgImage.hasBorders = true;
+        bgImage.hoverCursor = 'move';
+      }
       
       // Use built-in method to make all objects selectable
       if (this.editor._graphics.changeSelectableAll) {
