@@ -91,7 +91,7 @@ export class AiImageGenerationService {
     },
     {
       id: 'sdxl',
-      name: 'Stable Diffusion XL',
+      name: 'stable-diffusion-xl-base-1.0',
       description: 'Stability AI SDXL 1.0 — quality text-to-image generation via Hugging Face',
       maxWidth: 1024,
       maxHeight: 1024,
@@ -99,8 +99,8 @@ export class AiImageGenerationService {
       supportedFeatures: ['negativePrompt', 'numImages'],
     },
     {
-      id: 'sd21',
-      name: 'Stable Diffusion 2.1',
+      id: 'qwen',
+      name: 'Qwen-Image-Edit',
       description: 'Stability AI SD 2.1 — reliable text-to-image via Hugging Face',
       maxWidth: 768,
       maxHeight: 768,
