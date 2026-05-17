@@ -166,9 +166,38 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
       if (!backdropElement) {
         this.createBackdrop();
       }
+      // Add close button click handler
+      this.addCloseButtonHandler();
     } else {
       submenuElement?.classList.remove('modal-open');
       this.removeBackdrop();
+    }
+  }
+
+  private addCloseButtonHandler(): void {
+    const submenuElement = this.editorContainer.nativeElement.querySelector(
+      '.tui-image-editor-submenu'
+    ) as HTMLElement;
+    
+    if (submenuElement && !submenuElement.dataset['closeHandlerAdded']) {
+      submenuElement.dataset['closeHandlerAdded'] = 'true';
+      
+      submenuElement.addEventListener('click', (e: MouseEvent) => {
+        const target = e.target as HTMLElement;
+        // Check if clicked on the pseudo-element area (top-left corner)
+        if (target === submenuElement || target.parentElement === submenuElement) {
+          const rect = submenuElement.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          
+          // If click is in the top-left area where the close button is
+          if (x < 50 && y < 50) {
+            e.preventDefault();
+            e.stopPropagation();
+            this.closeMobileSubmenu();
+          }
+        }
+      }, true);
     }
   }
 
@@ -200,6 +229,13 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
     
     if (originalChangeMenu) {
       this.editor.ui.changeMenu = (menuName: string, toggle = true, discardSelection = true) => {
+        // On mobile, if clicking the same menu, toggle it off
+        if (this.isMobile && this.currentSubmenu === menuName && toggle) {
+          this.currentSubmenu = null;
+          this.updateSubmenuModalState();
+          return;
+        }
+        
         originalChangeMenu(menuName, toggle, discardSelection);
         
         // Update our submenu state after TUI changes menu
