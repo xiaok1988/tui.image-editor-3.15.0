@@ -2,7 +2,7 @@ const https = require('https');
 
 // Supported models on Hugging Face Inference API
 const MODELS = {
-  qwen: 'Qwen/Qwen-Image',
+  qwen: 'Qwen/Qwen-Image-2512',
   flux: 'black-forest-labs/FLUX.1-schnell',
   sdxl: 'stabilityai/stable-diffusion-xl-base-1.0',
 };
