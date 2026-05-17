@@ -91,7 +91,7 @@ export class AiImageGenerationService {
     },
     {
       id: 'sdxl',
-      name: 'stable-diffusion-xl-base-1.0',
+      name: 'Stable Diffusion (SDXL)',
       description: 'Stability AI SDXL 1.0 — quality text-to-image generation via Hugging Face',
       maxWidth: 1024,
       maxHeight: 1024,
