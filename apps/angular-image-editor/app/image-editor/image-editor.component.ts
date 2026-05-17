@@ -670,8 +670,11 @@ zoomIn(): void {
         canvasContainer.style.maxWidth = 'none';
         canvasContainer.style.maxHeight = 'none';
         canvasContainer.style.width = '100%';
-        canvasContainer.style.height = `calc(100% - 90px)`;
+        // Let CSS handle the height based on responsive rules
+        canvasContainer.style.height = '';
         canvasContainer.style.minHeight = '400px';
+        canvasContainer.style.top = '0';
+        canvasContainer.style.position = 'relative';
       }
 
       const canvasWrap = this.editorContainer.nativeElement.querySelector('.tui-image-editor-canvas-wrap') as HTMLElement;
@@ -840,17 +843,19 @@ zoomIn(): void {
             canvas.height = newHeight;
           }
 
-          const wrapper = this.editorContainer?.nativeElement.querySelector('.tui-image-editor-canvas-container');
-          if (wrapper) {
-            (wrapper as HTMLElement).style.width = `${newWidth}px`;
-            (wrapper as HTMLElement).style.height = `${newHeight}px`;
-          }
+          // Don't set canvas-container size to image size - keep it responsive
+          // const wrapper = this.editorContainer?.nativeElement.querySelector('.tui-image-editor-canvas-container');
+          // if (wrapper) {
+          //   (wrapper as HTMLElement).style.width = `${newWidth}px`;
+          //   (wrapper as HTMLElement).style.height = `${newHeight}px`;
+          // }
 
-          const canvasWrapper = this.editorContainer?.nativeElement.querySelector('.tui-image-editor-canvas-wrap');
-          if (canvasWrapper) {
-            (canvasWrapper as HTMLElement).style.width = `${newWidth}px`;
-            (canvasWrapper as HTMLElement).style.height = `${newHeight}px`;
-          }
+          // Don't set canvas-wrap size to image size - keep it responsive
+          // const canvasWrapper = this.editorContainer?.nativeElement.querySelector('.tui-image-editor-canvas-wrap');
+          // if (canvasWrapper) {
+          //   (canvasWrapper as HTMLElement).style.width = `${newWidth}px`;
+          //   (canvasWrapper as HTMLElement).style.height = `${newHeight}px`;
+          // }
 
           const canvasElements = this.editorContainer?.nativeElement.querySelectorAll('canvas');
           canvasElements?.forEach((canvasEl) => {
