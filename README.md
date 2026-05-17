@@ -26,8 +26,8 @@ google image api does not work as expected. (they have banned the free tier in m
 
 This is the desktop version
 
-![](G:\WORK\CREAITION\backup\tui.image-editor-3.15.0\desktop-image-editor.png)
+![](.\desktop-image-editor.png)
 
 And this is the mobile version
 
-![](G:\WORK\CREAITION\backup\tui.image-editor-3.15.0\mobile-image-editor.png)
+![](.\mobile-image-editor.png)
