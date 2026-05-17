@@ -161,23 +161,32 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
   private updateSubmenuModalState(): void {
     const submenuElement = this.editorContainer.nativeElement.querySelector(
       '.tui-image-editor-submenu'
-    );
+    ) as HTMLElement;
     const backdropElement = this.editorContainer.nativeElement.querySelector(
       '.tui-image-editor-submenu-backdrop'
     );
 
     if (this.currentSubmenu) {
-      // Remove hidden class first
-      submenuElement?.classList.remove('tui-image-editor-submenu-hidden');
-      submenuElement?.classList.add('modal-open');
+      console.log('Showing submenu:', this.currentSubmenu);
+      
+      // Show submenu by removing hidden class and adding modal-open
+      if (submenuElement) {
+        submenuElement.classList.remove('tui-image-editor-submenu-hidden');
+        submenuElement.classList.add('modal-open');
+      }
+      
       if (!backdropElement) {
         this.createBackdrop();
       }
       // Add close button click handler
       this.addCloseButtonHandler();
     } else {
-      submenuElement?.classList.remove('modal-open');
-      submenuElement?.classList.add('tui-image-editor-submenu-hidden');
+      console.log('Hiding submenu');
+      
+      if (submenuElement) {
+        submenuElement.classList.remove('modal-open');
+        submenuElement.classList.add('tui-image-editor-submenu-hidden');
+      }
       this.removeBackdrop();
 
       // Clear TUI's internal submenu state
@@ -247,6 +256,13 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
       this.editor.ui.submenu = null;
     }
 
+    // Remove menu class from main element
+    const mainElement = this.editorContainer.nativeElement.querySelector('.tui-image-editor-main') as HTMLElement;
+    if (mainElement && this.currentSubmenu) {
+      const menuClass = `tui-image-editor-menu-${this.currentSubmenu}`;
+      mainElement.classList.remove(menuClass);
+    }
+
     // Clear our submenu state
     this.currentSubmenu = null;
 
@@ -281,18 +297,30 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
 
         // If clicking the same menu and toggle is enabled, close it
         if (this.currentSubmenu === menuName && toggle) {
+          // Remove menu class from main element
+          const mainElement = this.editorContainer.nativeElement.querySelector('.tui-image-editor-main') as HTMLElement;
+          if (mainElement) {
+            const menuClass = `tui-image-editor-menu-${this.currentSubmenu}`;
+            mainElement.classList.remove(menuClass);
+          }
+          
+          // Clear TUI's internal state
+          this.editor.ui.submenu = null;
+          
           this.currentSubmenu = null;
           this.updateSubmenuModalState();
           return;
         }
 
-        // Call TUI's original method first to handle submenu switching
+        // Call TUI's original method to handle menu switching
         originalChangeMenu(menuName, toggle, discardSelection);
 
-        // Update our submenu state - use menuName directly since user clicked it
-        this.currentSubmenu = menuName;
-        console.log('Setting currentSubmenu to:', this.currentSubmenu);
-        this.updateSubmenuModalState();
+        // Update our submenu state after TUI has done its work
+        setTimeout(() => {
+          this.currentSubmenu = this.editor?.ui?.submenu || menuName;
+          console.log('Setting currentSubmenu to:', this.currentSubmenu);
+          this.updateSubmenuModalState();
+        }, 50);
       };
     }
 
@@ -309,8 +337,10 @@ export class ImageEditorComponent implements OnInit, OnDestroy, AfterViewInit, O
       // Check if submenu state changed
       setTimeout(() => {
         const newSubmenu = this.editor?.ui?.submenu;
-        if (newSubmenu && newSubmenu !== this.currentSubmenu) {
-          console.log('Submenu changed via controls:', newSubmenu);
+        
+        // Handle both opening and closing of submenu
+        if (newSubmenu !== this.currentSubmenu) {
+          console.log('Submenu changed via controls:', newSubmenu, 'current:', this.currentSubmenu);
           this.currentSubmenu = newSubmenu;
           this.updateSubmenuModalState();
         }
