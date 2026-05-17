@@ -9,6 +9,8 @@ const MODELS = {
 
 function hfRequest(modelId, apiToken, body) {
   return new Promise((resolve, reject) => {
+    console.log(MODELS);
+    console.log(modelId, '=====', MODELS[modelId])
     const url = `https://router.huggingface.co/hf-inference/models/${MODELS[modelId]}`;
     console.log('HF request URL:', url);
 
