@@ -28,6 +28,6 @@ This is the desktop version
 
 ![](desktop-image-editor.png)
 
-And this is the mobile version
+And this is the mobile version (the submenus are modal)
 
 ![](mobile-image-editor.png)
