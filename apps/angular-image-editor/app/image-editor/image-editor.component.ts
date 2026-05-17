@@ -651,25 +651,43 @@ zoomIn(): void {
 
     const container = this.editorContainer.nativeElement.parentElement;
     if (container) {
-      const rect = container.getBoundingClientRect();
-      const width = rect.width || window.innerWidth;
-      const height = rect.height || window.innerHeight;
+      // Get the container's computed height using offsetHeight which includes padding
+      const width = container.offsetWidth || window.innerWidth;
+      const height = container.offsetHeight || window.innerHeight;
+
+      // Ensure we have a valid height
+      const finalHeight = Math.max(height, window.innerHeight - 100);
 
       this.editor.ui.resizeEditor({
         uiSize: {
           width: `${width}px`,
-          height: `${height}px`,
+          height: `${finalHeight}px`,
         },
       });
 
       const canvasContainer = this.editorContainer.nativeElement.querySelector('.tui-image-editor-canvas-container') as HTMLElement;
       if (canvasContainer) {
-        canvasContainer.style.cssText = `max-width: none !important; max-height: none !important;`;
+        canvasContainer.style.maxWidth = 'none';
+        canvasContainer.style.maxHeight = 'none';
+        canvasContainer.style.width = '100%';
+        canvasContainer.style.height = `calc(100% - 90px)`;
+        canvasContainer.style.minHeight = '400px';
       }
 
       const canvasWrap = this.editorContainer.nativeElement.querySelector('.tui-image-editor-canvas-wrap') as HTMLElement;
       if (canvasWrap) {
-        canvasWrap.style.cssText = `max-width: none !important; max-height: none !important;`;
+        canvasWrap.style.maxWidth = 'none';
+        canvasWrap.style.maxHeight = 'none';
+        canvasWrap.style.width = '100%';
+        canvasWrap.style.height = '100%';
+        canvasWrap.style.minHeight = '400px';
+      }
+
+      // Also ensure the main editor container has proper height
+      const mainContainer = this.editorContainer.nativeElement.querySelector('.tui-image-editor-main') as HTMLElement;
+      if (mainContainer) {
+        mainContainer.style.height = `${finalHeight - 90}px`;
+        mainContainer.style.minHeight = '400px';
       }
     }
   }

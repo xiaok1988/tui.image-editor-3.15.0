@@ -1,29 +1,36 @@
 .tui-image-editor-container {
   width: 100%;
   height: 100%;
+  min-height: 500px;
   position: relative;
-  overflow: visible !important;
+  overflow: hidden !important;
 }
 
 :host ::ng-deep .tui-image-editor-canvas-container {
-  overflow: visible !important;
+  overflow: auto !important;
   pointer-events: auto !important;
-  max-width: none !important;
-  max-height: none !important;
+  position: relative !important;
+  z-index: 1 !important;
+  width: 100% !important;
+  height: calc(100% - 90px) !important;
 }
 
 :host ::ng-deep .tui-image-editor-canvas-wrap {
-  max-width: none !important;
-  max-height: none !important;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 :host ::ng-deep .tui-image-editor-main {
-  max-width: none !important;
-  max-height: none !important;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 :host ::ng-deep .tui-image-editor-canvas-container canvas {
   pointer-events: auto !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  height: auto !important;
+  width: auto !important;
 }
 
 /* Mobile-first responsive styles */
@@ -127,10 +134,22 @@
 :host ::ng-deep .tui-image-editor-controls {
   flex-wrap: wrap !important;
   overflow-x: auto !important;
+  position: relative !important;
+  z-index: 100 !important;
 }
 
 :host ::ng-deep .tui-image-editor-menu {
   flex-wrap: wrap !important;
+  position: relative !important;
+  z-index: 101 !important;
+}
+
+:host ::ng-deep .tui-image-editor-menu li,
+:host ::ng-deep .tui-image-editor-menu button,
+:host ::ng-deep .tui-image-editor-menu .tui-image-editor-item {
+  position: relative !important;
+  z-index: 102 !important;
+  pointer-events: auto !important;
 }
 
 /* Small devices (landscape phones, 640px and up) */
@@ -148,6 +167,12 @@
 
   :host ::ng-deep .tui-image-editor-submenu-backdrop {
     display: none !important;
+  }
+
+  :host ::ng-deep .tui-image-editor-controls {
+    position: relative !important;
+    z-index: 100 !important;
+    background-color: #fff !important;
   }
 }
 

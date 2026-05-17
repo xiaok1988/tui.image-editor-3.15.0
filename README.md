@@ -34,4 +34,4 @@ And this is the mobile version (the submenus are modal)
 
 
 Things left TODO:
-1. when opened in very small screen a relatively large picture, the right controles cannot be clicked.
+1. when opened in very small screen a relatively large picture, the right controls cannot be clicked.
