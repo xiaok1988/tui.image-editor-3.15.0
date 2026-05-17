@@ -31,3 +31,7 @@ This is the desktop version
 And this is the mobile version (the submenus are modal)
 
 ![](mobile-image-editor.png)
+
+
+Things left TODO:
+1. when opened in very small screen a relatively large picture, the right controles cannot be clicked.
